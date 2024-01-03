@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsprisonerdownloadapi.integration
+package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
