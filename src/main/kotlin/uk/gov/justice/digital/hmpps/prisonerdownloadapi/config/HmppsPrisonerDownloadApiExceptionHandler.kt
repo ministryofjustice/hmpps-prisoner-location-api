@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsprisonerdownloadapi.config
+package uk.gov.justice.digital.hmpps.prisonerdownloadapi.config
 
 import jakarta.validation.ValidationException
 import org.slf4j.LoggerFactory
