@@ -1,5 +1,6 @@
 generic-service:
   nameOverride: hmpps-prisoner-download-api
+  serviceAccountName: hmpps-prisoner-download-api
   productId: "DPS057"
 
   replicaCount: 4
@@ -12,7 +13,7 @@ generic-service:
   ingress:
     enabled: true
     host: app-hostname.local
-    tlsSecretName: hmpps-prisoner-download-api-cert
+    tlsSecretName: prisoner-download-api-cert
 
   env:
     JAVA_OPTS: "-Xmx512m"
