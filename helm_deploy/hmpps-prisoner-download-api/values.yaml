@@ -27,7 +27,7 @@ generic-service:
       APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
 
     hmpps-prisoner-download-bucket:
-      S3_BUCKET_NAME: "bucket_arn"
+      S3_BUCKET_NAME: "bucket_name"
 
   allowlist:
     groups:
