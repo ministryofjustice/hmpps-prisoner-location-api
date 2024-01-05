@@ -4,3 +4,8 @@ server:
 management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
+
+s3:
+  provider: localstack
+  bucketName: ${random.uuid}
+  localstackUrl: http://localhost:4566

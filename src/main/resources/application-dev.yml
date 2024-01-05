@@ -1,0 +1,4 @@
+s3:
+  provider: localstack
+  bucketName: bucket
+  localstackUrl: http://localhost:4566

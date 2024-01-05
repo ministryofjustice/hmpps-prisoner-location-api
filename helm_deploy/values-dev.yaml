@@ -2,6 +2,11 @@
 generic-service:
   replicaCount: 2
 
+  scheduledDowntime:
+    enabled: true
+    startup: '10 6 * * 1-5' # Start at 6.10am UTC Monday-Friday
+    shutdown: '34 21 * * 1-5' # Stop at 9.34pm UTC Monday-Friday
+
   ingress:
     host: prisoner-download-api-dev.prison.service.justice.gov.uk
 
