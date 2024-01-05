@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono
 @ContextConfiguration(initializers = [ConfigDataApplicationContextInitializer::class])
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension::class)
-class ClientTrackingConfigurationTest {
+class ClientTrackingWebFilterTest {
   @Suppress("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   private lateinit var clientTrackingWebFilter: ClientTrackingWebFilter
@@ -68,6 +68,7 @@ class ClientTrackingConfigurationTest {
     otelTesting.assertTraces().hasTracesSatisfyingExactly({ t ->
       t.hasSpansSatisfyingExactly({
         it.hasAttribute(AttributeKey.stringKey("clientId"), "prisoner-download-client")
+        it.hasTotalAttributeCount(1)
       },)
     },)
   }
