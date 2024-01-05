@@ -4,6 +4,8 @@ plugins {
 }
 
 configurations {
+  implementation { exclude(module = "spring-boot-starter-web") }
+  implementation { exclude(module = "spring-boot-starter-tomcat") }
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
@@ -12,11 +14,18 @@ ext["okhttp.version"] = "5.0.0-alpha.11"
 
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("org.springframework.boot:spring-boot-starter-security")
+  implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+  implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
   implementation("aws.sdk.kotlin:s3:1.0.29")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.3")
+
+  testImplementation("io.jsonwebtoken:jjwt-impl:0.12.3")
+  testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
+  testImplementation("io.opentelemetry:opentelemetry-sdk-testing")
 }
 
 kotlin {
