@@ -7,10 +7,13 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
+// okhttp only used by the AWS SDK kotlin library so okay to pin
+ext["okhttp.version"] = "5.0.0-alpha.11"
+
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
 
-  implementation("software.amazon.awssdk:s3:2.22.9")
+  implementation("aws.sdk.kotlin:s3:1.0.29")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.3")

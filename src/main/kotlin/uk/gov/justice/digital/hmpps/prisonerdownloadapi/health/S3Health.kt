@@ -1,26 +1,27 @@
 package uk.gov.justice.digital.hmpps.prisonerdownloadapi.health
 
+import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.headBucket
+import kotlinx.coroutines.reactor.mono
 import org.springframework.boot.actuate.health.Health
 import org.springframework.boot.actuate.health.ReactiveHealthIndicator
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
-import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.S3Properties
 
 @Component
 class S3Health(
   private val s3Properties: S3Properties,
-  private val s3Client: S3AsyncClient,
+  private val s3Client: S3Client,
 ) : ReactiveHealthIndicator {
-  override fun health(): Mono<Health> =
+  override fun health(): Mono<Health> = mono {
     with(s3Properties) {
-      Mono.fromFuture(
-        s3Client.headBucket(HeadBucketRequest.builder().bucket(bucketName).build()).thenApply {
-          Health.up().withDetail("bucketName", bucketName).build()
-        }.exceptionally {
-          Health.down().withDetail("bucketName", bucketName).withException(it).build()
-        },
-      )
+      try {
+        s3Client.headBucket { bucket = bucketName }
+        Health.up().withDetail("bucketName", bucketName).build()
+      } catch (e: Exception) {
+        Health.down().withDetail("bucketName", bucketName).withException(e).build()
+      }
     }
+  }
 }
