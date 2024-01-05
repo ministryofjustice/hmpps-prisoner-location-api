@@ -13,10 +13,11 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
-  profiles:
-    group:
-      test:
-        - "stdout"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${api.base.url.oauth}/.well-known/jwks.json
 
 server:
   port: 8080

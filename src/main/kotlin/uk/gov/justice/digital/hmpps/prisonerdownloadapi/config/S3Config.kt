@@ -34,7 +34,7 @@ class S3Config(private val s3Properties: S3Properties) {
   @ConditionalOnProperty(name = ["s3.provider"], havingValue = "aws")
   fun s3Client(): S3Client = runBlocking {
     S3Client.fromEnvironment {
-      this.region = s3Properties.region
+      region = s3Properties.region
     }.also {
       log.info("Creating AWS S3Client with DefaultCredentialsProvider and region {}", s3Properties.region)
     }
@@ -43,36 +43,34 @@ class S3Config(private val s3Properties: S3Properties) {
   @Bean("awsS3Client")
   @ConditionalOnProperty(name = ["s3.provider"], havingValue = "localstack")
   fun awsS3ClientLocalstack(): S3Client = runBlocking {
-    with(s3Properties) {
-      S3Client.fromEnvironment {
-        this.region = s3Properties.region
-        this.endpointUrl = Url.parse(localstackUrl!!)
-        this.forcePathStyle = true
-        this.credentialsProvider = StaticCredentialsProvider {
-          accessKeyId = "any"
-          secretAccessKey = "any"
-        }
-        this.useArnRegion = true
-      }.also {
-        log.info(
-          "Creating localstack S3Client with StaticCredentialsProvider, localstackUrl {} and region {}",
-          localstackUrl,
-          region,
-        )
-      }.apply {
-        log.info("Checking for S3 bucket named {}", bucketName)
-        try {
-          this.headBucket { bucket = bucketName }
-          log.info("Bucket {} exists already", bucketName)
-        } catch (e: NotFound) {
-          this.createBucket {
-            bucket = bucketName
-            createBucketConfiguration {
-              this.locationConstraint = BucketLocationConstraint.fromValue(region)
-            }
+    S3Client.fromEnvironment {
+      region = s3Properties.region
+      endpointUrl = Url.parse(s3Properties.localstackUrl!!)
+      forcePathStyle = true
+      credentialsProvider = StaticCredentialsProvider {
+        accessKeyId = "any"
+        secretAccessKey = "any"
+      }
+      useArnRegion = true
+    }.also {
+      log.info(
+        "Creating localstack S3Client with StaticCredentialsProvider, localstackUrl {} and region {}",
+        s3Properties.localstackUrl,
+        s3Properties.region,
+      )
+    }.apply {
+      log.info("Checking for S3 bucket named {}", s3Properties.bucketName)
+      try {
+        headBucket { bucket = s3Properties.bucketName }
+        log.info("Bucket {} exists already", s3Properties.bucketName)
+      } catch (e: NotFound) {
+        createBucket {
+          bucket = s3Properties.bucketName
+          createBucketConfiguration {
+            locationConstraint = BucketLocationConstraint.fromValue(s3Properties.region)
           }
-          log.info("Bucket {} now created", bucketName)
         }
+        log.info("Bucket {} now created", s3Properties.bucketName)
       }
     }
   }

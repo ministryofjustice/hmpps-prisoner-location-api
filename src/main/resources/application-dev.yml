@@ -2,3 +2,8 @@ s3:
   provider: localstack
   bucketName: bucket
   localstackUrl: http://localhost:4566
+
+api:
+  base:
+    url:
+      oauth: http://localhost:8090/auth
