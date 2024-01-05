@@ -23,9 +23,16 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.3")
 
+  implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0")
+
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.3")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
   testImplementation("io.opentelemetry:opentelemetry-sdk-testing")
+  testImplementation("io.projectreactor:reactor-test")
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.19") {
+    exclude(group = "io.swagger.core.v3")
+  }
+  testImplementation("io.swagger.core.v3:swagger-core-jakarta:2.2.20")
 }
 
 kotlin {
