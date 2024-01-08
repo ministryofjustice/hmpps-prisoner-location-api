@@ -160,4 +160,60 @@ class DownloadResourceIntTest : IntegrationTestBase() {
       }
     }
   }
+
+  @DisplayName("GET /download")
+  @Nested
+  inner class DownloadTest {
+    @Nested
+    inner class Security {
+      @Test
+      fun `access forbidden when no authority`() {
+        webTestClient.get().uri("/download/file.zip")
+          .exchange()
+          .expectStatus().isUnauthorized
+      }
+
+      @Test
+      fun `access forbidden when no role`() {
+        webTestClient.get().uri("/download/file.zip")
+          .headers(setAuthorisation(roles = listOf()))
+          .exchange()
+          .expectStatus().isForbidden
+      }
+
+      @Test
+      fun `access forbidden with wrong role`() {
+        webTestClient.get().uri("/download/file.zip")
+          .headers(setAuthorisation(roles = listOf("ROLE_BANANAS")))
+          .exchange()
+          .expectStatus().isForbidden
+      }
+    }
+
+    @Nested
+    inner class HappyPath {
+      @Test
+      fun `can retrieve today's file`() = runTest {
+        s3Client.putObject {
+          bucket = s3Properties.bucketName
+          key = "file.zip"
+          body = ByteStream.fromString("Can retrieve today's file")
+        }
+
+        webTestClient.get().uri("/download/file.zip")
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOADS")))
+          .exchange()
+          .expectStatus().isOk
+          .expectBody(String::class.java).isEqualTo("Can retrieve today's file")
+      }
+
+      @Test
+      fun `will receive not found if no file found`() = runTest {
+        webTestClient.get().uri("/download/file.zip")
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOADS")))
+          .exchange()
+          .expectStatus().isNotFound
+      }
+    }
+  }
 }
