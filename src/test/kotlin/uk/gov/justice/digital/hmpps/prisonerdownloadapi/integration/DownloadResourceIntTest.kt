@@ -6,15 +6,18 @@ import aws.sdk.kotlin.services.s3.model.Delete
 import aws.sdk.kotlin.services.s3.model.ObjectIdentifier
 import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
+import io.opentelemetry.sdk.testing.assertj.OpenTelemetryAssertions.assertThat
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class DownloadResourceIntTest : IntegrationTestBase() {
   @BeforeEach
-  fun setup(): Unit = runTest {
+  fun setup() = runTest {
     s3Client
       .listObjectsV2 { bucket = s3Properties.bucketName }
       .contents
@@ -75,6 +78,16 @@ class DownloadResourceIntTest : IntegrationTestBase() {
           .jsonPath("files[0].name").isEqualTo("file.zip")
           .jsonPath("files[0].size").isEqualTo("26")
       }
+
+      @Test
+      fun `can retrieve empty list of files`() = runTest {
+        webTestClient.get().uri("/list")
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOADS")))
+          .exchange()
+          .expectStatus().isOk
+          .expectBody()
+          .jsonPath("files.size()").isEqualTo(0)
+      }
     }
   }
 
@@ -110,13 +123,40 @@ class DownloadResourceIntTest : IntegrationTestBase() {
     @Nested
     inner class HappyPath {
       @Test
-      fun `can retrieve today's file`() {
+      fun `can retrieve today's file`() = runTest {
+        val today = LocalDate.now()
+        val todayFileName = "${today.format(DateTimeFormatter.ofPattern("YYYYMMDD"))}.zip"
+        s3Client.putObject {
+          bucket = s3Properties.bucketName
+          key = todayFileName
+          body = ByteStream.fromString("Can retrieve today's file")
+        }
+
         webTestClient.get().uri("/today")
           .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOADS")))
           .exchange()
           .expectStatus().isOk
           .expectBody()
-          .jsonPath("name").isEqualTo("file")
+          .jsonPath("name").isEqualTo(todayFileName)
+          .jsonPath("size").isEqualTo(25)
+          .jsonPath("lastModified").value<String> {
+            assertThat(it).startsWith(today.format(DateTimeFormatter.ofPattern("YYYY-MM-DD")))
+          }
+      }
+
+      @Test
+      fun `will receive not found if no file from today`() = runTest {
+        val yesterday = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("YYYYMMDD"))
+        s3Client.putObject {
+          bucket = s3Properties.bucketName
+          key = "$yesterday.zip"
+          body = ByteStream.fromString("Can retrieve today's file")
+        }
+
+        webTestClient.get().uri("/today")
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOADS")))
+          .exchange()
+          .expectStatus().isNotFound
       }
     }
   }

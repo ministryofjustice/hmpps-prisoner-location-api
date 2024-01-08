@@ -63,7 +63,7 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
-  suspend fun getToday(): Download = downloadService.getToday()
+  suspend fun getToday(): Download = downloadService.getToday() ?: throw TodaysFileNotFound()
 }
 
 @Schema(description = "NOMIS Extract downloads")
@@ -83,3 +83,5 @@ data class Download(
   @Schema(description = "Date time the file was last modified")
   val lastModified: Instant?,
 )
+
+class TodaysFileNotFound : Exception("Today's file not found")

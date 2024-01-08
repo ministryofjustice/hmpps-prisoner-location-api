@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.S3Properties
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.Download
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.Downloads
-import java.time.Instant
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
 
 @Service
 class DownloadService(
@@ -21,5 +22,8 @@ class DownloadService(
       Downloads(this ?: emptyList())
     }
 
-  suspend fun getToday(): Download = Download("file", 10, Instant.now())
+  suspend fun getToday(): Download? = s3Client.listObjectsV2 {
+    bucket = s3Properties.bucketName
+    prefix = "${LocalDate.now().format(BASIC_ISO_DATE)}.zip"
+  }.contents?.firstOrNull()?.run { Download(key, size, lastModified?.toJvmInstant()) }
 }
