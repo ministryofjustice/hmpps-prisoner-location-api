@@ -28,7 +28,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.3")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
   testImplementation("io.opentelemetry:opentelemetry-sdk-testing")
-  testImplementation("io.projectreactor:reactor-test")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.19") {
     exclude(group = "io.swagger.core.v3")
   }
