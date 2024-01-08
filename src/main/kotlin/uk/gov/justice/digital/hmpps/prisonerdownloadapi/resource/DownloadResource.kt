@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.ErrorResponse
@@ -63,7 +64,32 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
-  suspend fun getToday(): Download = downloadService.getToday() ?: throw TodaysFileNotFound()
+  suspend fun getToday(): Download = downloadService.getToday() ?: throw ExtractFileNotFound()
+
+  @GetMapping("/download/{filename}", produces = ["application/x-zip-compressed"])
+  @Operation(
+    summary = "Retrieve today's download extract information",
+    description = "Retrieves information on today's download. Requires role PRISONER_DOWNLOADS",
+    responses = [
+      ApiResponse(responseCode = "200", description = "Information on today's file"),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No file for today exists",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  suspend fun downloadFile(@PathVariable filename: String): ByteArray = downloadService.download(filename) ?: throw ExtractFileNotFound()
 }
 
 @Schema(description = "NOMIS Extract downloads")
@@ -84,4 +110,4 @@ data class Download(
   val lastModified: Instant?,
 )
 
-class TodaysFileNotFound : Exception("Today's file not found")
+class ExtractFileNotFound : Exception("Extract file not found")

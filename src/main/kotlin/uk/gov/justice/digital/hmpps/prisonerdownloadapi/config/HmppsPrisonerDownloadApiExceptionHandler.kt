@@ -11,7 +11,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.reactive.resource.NoResourceFoundException
-import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.TodaysFileNotFound
+import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.ExtractFileNotFound
 
 @RestControllerAdvice
 class HmppsPrisonerDownloadApiExceptionHandler {
@@ -48,8 +48,8 @@ class HmppsPrisonerDownloadApiExceptionHandler {
       ),
     ).also { log.info("Not found: {}", e.message) }
 
-  @ExceptionHandler(TodaysFileNotFound::class)
-  fun handleException(e: TodaysFileNotFound): ResponseEntity<ErrorResponse> = ResponseEntity
+  @ExceptionHandler(ExtractFileNotFound::class)
+  fun handleException(e: ExtractFileNotFound): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(NOT_FOUND)
     .body(
       ErrorResponse(
