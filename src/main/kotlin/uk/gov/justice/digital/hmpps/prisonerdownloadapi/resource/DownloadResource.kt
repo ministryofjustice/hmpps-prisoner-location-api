@@ -11,13 +11,14 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.ErrorResponse
-import java.time.LocalDateTime
+import uk.gov.justice.digital.hmpps.prisonerdownloadapi.service.DownloadService
+import java.time.Instant
 
 @RestController
 @Validated
 @RequestMapping("/", produces = [MediaType.APPLICATION_JSON_VALUE])
 @PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOADS')")
-class DownloadResource {
+class DownloadResource(private val downloadService: DownloadService) {
 
   @GetMapping("/list")
   @Operation(
@@ -37,7 +38,7 @@ class DownloadResource {
       ),
     ],
   )
-  suspend fun getList(): Downloads = Downloads(listOf(Download("file", 10, LocalDateTime.now())))
+  suspend fun getList(): Downloads = downloadService.getList()
 
   @GetMapping("/today")
   @Operation(
@@ -62,7 +63,7 @@ class DownloadResource {
       ),
     ],
   )
-  suspend fun getToday(): Download = Download("file", 10, LocalDateTime.now())
+  suspend fun getToday(): Download = downloadService.getToday()
 }
 
 @Schema(description = "NOMIS Extract downloads")
@@ -74,11 +75,11 @@ data class Downloads(
 @Schema(description = "NOMIS Extract download")
 data class Download(
   @Schema(description = "File name")
-  val name: String,
+  val name: String?,
 
   @Schema(description = "File size")
-  val size: Int,
+  val size: Long?,
 
   @Schema(description = "Date time the file was last modified")
-  val lastModified: LocalDateTime,
+  val lastModified: Instant?,
 )
