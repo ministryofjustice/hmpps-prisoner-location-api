@@ -18,7 +18,6 @@ import java.time.Instant
 @RestController
 @Validated
 @RequestMapping("/", produces = [MediaType.APPLICATION_JSON_VALUE])
-@PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOADS')")
 class DownloadResource(private val downloadService: DownloadService) {
 
   @GetMapping("/list")
@@ -39,6 +38,7 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
+  @PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOADS')")
   suspend fun getList(): Downloads = downloadService.getList()
 
   @GetMapping("/today")
@@ -64,14 +64,15 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
+  @PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOADS')")
   suspend fun getToday(): Download = downloadService.getToday() ?: throw ExtractFileNotFound()
 
   @GetMapping("/download/{filename}", produces = ["application/x-zip-compressed"])
   @Operation(
-    summary = "Retrieve today's download extract information",
-    description = "Retrieves information on today's download. Requires role PRISONER_DOWNLOADS",
+    summary = "Download specified file",
+    description = "Download specified file. Requires role PRISONER_DOWNLOADS or PRISONER_DOWNLOADS_API",
     responses = [
-      ApiResponse(responseCode = "200", description = "Information on today's file"),
+      ApiResponse(responseCode = "200", description = "File download"),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
@@ -84,11 +85,12 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
       ApiResponse(
         responseCode = "404",
-        description = "No file for today exists",
+        description = "No file exists",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
+  @PreAuthorize("hasAnyRole('ROLE_PRISONER_DOWNLOADS', 'ROLE_PRISONER_DOWNLOADS_API')")
   suspend fun downloadFile(@PathVariable filename: String): ByteArray = downloadService.download(filename) ?: throw ExtractFileNotFound()
 }
 

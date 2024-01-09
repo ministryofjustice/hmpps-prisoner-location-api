@@ -17,20 +17,20 @@ import uk.gov.justice.digital.hmpps.prisonerdownloadapi.service.DownloadService
 @RestController
 @Validated
 @RequestMapping("/legacy", produces = [MediaType.APPLICATION_JSON_VALUE])
-@PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOADS')")
+@PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOADS_API')")
 class LegacyDownloadResource(private val downloadService: DownloadService) {
 
   @GetMapping("/download/{filename}", produces = ["application/x-zip-compressed"])
   @Operation(
-    summary = "Retrieve today's download extract information using basic authentication",
-    description = """Retrieves information on today's download using basic authentication.
+    summary = "Download specified file using basic authentication",
+    description = """Download specified file using basic authentication.
        This is a legacy endpoint provided for backwards compatibility.  It is expected that 
        clients will transition onto the /download/{filename} endpoint using bearer (oauth2)
        authentication instead.
-       Requires role PRISONER_DOWNLOADS""",
+       Requires role PRISONER_DOWNLOADS_API""",
     deprecated = true,
     responses = [
-      ApiResponse(responseCode = "200", description = "Information on today's file"),
+      ApiResponse(responseCode = "200", description = "File download"),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
@@ -43,7 +43,7 @@ class LegacyDownloadResource(private val downloadService: DownloadService) {
       ),
       ApiResponse(
         responseCode = "404",
-        description = "No file for today exists",
+        description = "No file exists",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

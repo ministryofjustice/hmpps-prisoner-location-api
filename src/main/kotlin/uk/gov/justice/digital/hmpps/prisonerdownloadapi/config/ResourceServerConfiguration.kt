@@ -73,7 +73,7 @@ class AuthReactiveAuthenticationManager(private val hmppsAuthWebClient: WebClien
             UsernamePasswordAuthenticationToken(
               authentication.principal,
               authentication.credentials,
-              listOf(SimpleGrantedAuthority("ROLE_PRISONER_DOWNLOADS")),
+              listOf(SimpleGrantedAuthority("ROLE_PRISONER_DOWNLOADS_API")),
             ),
           )
         } else {
