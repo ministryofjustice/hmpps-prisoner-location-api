@@ -110,4 +110,4 @@ data class Download(
   val lastModified: Instant?,
 )
 
-class ExtractFileNotFound : Exception("Extract file not found")
+class ExtractFileNotFound : RuntimeException("Extract file not found")

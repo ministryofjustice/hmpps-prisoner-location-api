@@ -33,6 +33,7 @@ dependencies {
     exclude(group = "io.swagger.core.v3")
   }
   testImplementation("io.swagger.core.v3:swagger-core-jakarta:2.2.20")
+  testImplementation("org.wiremock:wiremock-standalone:3.3.1")
 }
 
 kotlin {
