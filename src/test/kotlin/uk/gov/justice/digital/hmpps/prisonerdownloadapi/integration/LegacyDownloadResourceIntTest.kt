@@ -1,9 +1,5 @@
 package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration
 
-import aws.sdk.kotlin.services.s3.deleteObjects
-import aws.sdk.kotlin.services.s3.listObjectsV2
-import aws.sdk.kotlin.services.s3.model.Delete
-import aws.sdk.kotlin.services.s3.model.ObjectIdentifier
 import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
 import kotlinx.coroutines.test.runTest
@@ -16,19 +12,7 @@ import uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.HmppsAuthApi
 
 class LegacyDownloadResourceIntTest : IntegrationTestBase() {
   @BeforeEach
-  fun setup() = runTest {
-    s3Client
-      .listObjectsV2 { bucket = s3Properties.bucketName }
-      .contents
-      ?.map { ObjectIdentifier { key = it.key } }
-      .takeIf { it?.isNotEmpty() == true }
-      ?.let { keys ->
-        s3Client.deleteObjects {
-          bucket = s3Properties.bucketName
-          delete = Delete { objects = keys }
-        }
-      }
-  }
+  fun setup() = clearDownS3()
 
   @DisplayName("GET /legacy/download")
   @Nested
@@ -107,7 +91,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
           body = ByteStream.fromString("Can retrieve today's file")
         }
 
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS_API")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -118,7 +102,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `will receive not found if no file found`() = runTest {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS_API")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }

@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.health
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.HmppsAuthApiExtension.Companion.hmppsAuth
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.IntegrationTestBase
 import java.time.LocalDateTime
@@ -12,7 +11,7 @@ import java.util.function.Consumer
 
 class HealthCheckTest : IntegrationTestBase() {
   @BeforeEach
-  fun setup(): Unit = HmppsAuthApiExtension.hmppsAuth.stubHealthPing(200)
+  fun setup() = hmppsAuth.stubHealthPing(200)
 
   @Test
   fun `Health page reports ok`() {

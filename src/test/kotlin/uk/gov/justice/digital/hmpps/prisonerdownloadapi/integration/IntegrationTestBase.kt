@@ -1,6 +1,11 @@
 package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration
 
 import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.deleteObjects
+import aws.sdk.kotlin.services.s3.listObjectsV2
+import aws.sdk.kotlin.services.s3.model.Delete
+import aws.sdk.kotlin.services.s3.model.ObjectIdentifier
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -33,4 +38,18 @@ abstract class IntegrationTestBase {
     roles: List<String> = listOf(),
     scopes: List<String> = listOf(),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, roles, scopes)
+
+  internal fun clearDownS3() = runTest {
+    s3Client
+      .listObjectsV2 { bucket = s3Properties.bucketName }
+      .contents
+      ?.map { ObjectIdentifier { key = it.key } }
+      .takeIf { it?.isNotEmpty() == true }
+      ?.let { keys ->
+        s3Client.deleteObjects {
+          bucket = s3Properties.bucketName
+          delete = Delete { objects = keys }
+        }
+      }
+  }
 }

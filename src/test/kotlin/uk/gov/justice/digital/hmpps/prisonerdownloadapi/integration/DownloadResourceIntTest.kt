@@ -1,9 +1,5 @@
 package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration
 
-import aws.sdk.kotlin.services.s3.deleteObjects
-import aws.sdk.kotlin.services.s3.listObjectsV2
-import aws.sdk.kotlin.services.s3.model.Delete
-import aws.sdk.kotlin.services.s3.model.ObjectIdentifier
 import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
 import io.opentelemetry.sdk.testing.assertj.OpenTelemetryAssertions.assertThat
@@ -17,19 +13,7 @@ import java.time.format.DateTimeFormatter
 
 class DownloadResourceIntTest : IntegrationTestBase() {
   @BeforeEach
-  fun setup() = runTest {
-    s3Client
-      .listObjectsV2 { bucket = s3Properties.bucketName }
-      .contents
-      ?.map { ObjectIdentifier { key = it.key } }
-      .takeIf { it?.isNotEmpty() == true }
-      ?.let { keys ->
-        s3Client.deleteObjects {
-          bucket = s3Properties.bucketName
-          delete = Delete { objects = keys }
-        }
-      }
-  }
+  fun setup() = clearDownS3()
 
   @DisplayName("GET /list")
   @Nested
@@ -211,6 +195,14 @@ class DownloadResourceIntTest : IntegrationTestBase() {
       fun `will receive not found if no file found`() = runTest {
         webTestClient.get().uri("/download/file.zip")
           .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOADS")))
+          .exchange()
+          .expectStatus().isNotFound
+      }
+
+      @Test
+      fun `can use api role to download`() = runTest {
+        webTestClient.get().uri("/download/file.zip")
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOADS_API")))
           .exchange()
           .expectStatus().isNotFound
       }
