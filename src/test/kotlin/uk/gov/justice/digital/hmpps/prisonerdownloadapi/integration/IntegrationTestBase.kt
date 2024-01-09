@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration
 
 import aws.sdk.kotlin.services.s3.S3Client
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.S3Properties
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
+@ExtendWith(HmppsAuthApiExtension::class)
 abstract class IntegrationTestBase {
 
   @Autowired

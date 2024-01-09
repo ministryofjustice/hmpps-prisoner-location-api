@@ -1,9 +1,14 @@
 package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.health
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration.IntegrationTestBase
 
 class S3HealthTest : IntegrationTestBase() {
+  @BeforeEach
+  fun setup(): Unit = HmppsAuthApiExtension.hmppsAuth.stubHealthPing(200)
+
   @Test
   fun `S3 health page reports ok`() {
     webTestClient.get()
