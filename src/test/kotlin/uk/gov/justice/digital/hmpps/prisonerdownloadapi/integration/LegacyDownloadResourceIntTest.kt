@@ -2,9 +2,11 @@ package uk.gov.justice.digital.hmpps.prisonerdownloadapi.integration
 
 import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
+import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
+import com.github.tomakehurst.wiremock.matching.EqualToPattern
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -59,9 +61,8 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
       }
 
       @Test
-      @Disabled("TODO: need to configure roles from auth response")
       fun `access forbidden with no role`() {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_BANANAS")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf()))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -70,7 +71,6 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
       }
 
       @Test
-      @Disabled("TODO: need to configure roles from auth response")
       fun `access forbidden with wrong role`() {
         hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_BANANAS")))
 
@@ -98,6 +98,23 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
           .exchange()
           .expectStatus().isOk
           .expectBody(String::class.java).isEqualTo("Can retrieve today's file")
+      }
+
+      @Test
+      fun `will make a token request to auth for client credentials`() = runTest {
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS_API")))
+
+        webTestClient.get().uri("/legacy/download/file.zip")
+          .headers { it.setBasicAuth("john", "smith") }
+          .exchange()
+          .expectStatus().isNotFound
+
+        hmppsAuth.verify(
+          postRequestedFor(urlPathEqualTo("/auth/oauth/token"))
+            // john:smith converted to base64
+            .withHeader("Authorization", EqualToPattern("Basic am9objpzbWl0aA=="))
+            .withFormParam("grant_type", EqualToPattern("client_credentials")),
+        )
       }
 
       @Test
