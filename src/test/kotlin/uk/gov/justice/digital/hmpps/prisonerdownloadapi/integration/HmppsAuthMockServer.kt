@@ -33,8 +33,14 @@ class OAuthMockServer : WireMockServer(8090) {
             .withBody(
               """
               {
-                 "access_token": $jwt, 
-                 "token_type": "bearer"
+                "access_token": "$jwt",
+                "auth_source": "none",
+                "expires_in": 3599,
+                "iss": "http://localhost:8090/auth/issuer",
+                "jti": "UsPoQvMxEpb40VpJbWrbmHtUln8",
+                "scope": "read",
+                "sub": "omicadmin",
+                "token_type": "bearer"
               }
               """.trimIndent(),
             )

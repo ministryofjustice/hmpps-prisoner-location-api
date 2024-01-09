@@ -57,7 +57,7 @@ class HmppsPrisonerDownloadApiExceptionHandler {
         userMessage = "Not found: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("Not found", e.message) }
+    ).also { log.info("Not found: {}", e.message) }
 
   @ExceptionHandler(Exception::class)
   fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
