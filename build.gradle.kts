@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.13.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.14.1"
   kotlin("plugin.spring") version "1.9.22"
 }
 
@@ -18,7 +18,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
-  implementation("aws.sdk.kotlin:s3:1.0.29")
+  implementation("aws.sdk.kotlin:s3:1.0.33")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.3")
