@@ -50,8 +50,8 @@ class ClientTrackingWebFilterTest {
       t.hasSpansSatisfyingExactly({
         it.hasAttribute(AttributeKey.stringKey("username"), "bob")
         it.hasAttribute(AttributeKey.stringKey("clientId"), "prisoner-download-client")
-      },)
-    },)
+      })
+    })
   }
 
   @Test
@@ -69,8 +69,8 @@ class ClientTrackingWebFilterTest {
       t.hasSpansSatisfyingExactly({
         it.hasAttribute(AttributeKey.stringKey("clientId"), "prisoner-download-client")
         it.hasTotalAttributeCount(1)
-      },)
-    },)
+      })
+    })
   }
 
   private companion object {
