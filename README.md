@@ -10,7 +10,7 @@ The full list of endpoints can be found in the API docs, see the view link above
 ## Accessing S3 locally
 
 ```shell
-k run -it --rm debug --image=ghcr.io/ministryofjustice/hmpps-devops-tools:latest --restart=Never --overrides='{ "spec": { "serviceAccount": "hmpps-prisoner-download-api" }  }' -- bash
+kubectl run -it --rm debug --image=ghcr.io/ministryofjustice/hmpps-devops-tools:latest --restart=Never --overrides='{ "spec": { "serviceAccount": "hmpps-prisoner-download-api" }  }' -- bash
 ```
 
 will start a shell connecting to AWS using the service account credentials.  You should then find that
