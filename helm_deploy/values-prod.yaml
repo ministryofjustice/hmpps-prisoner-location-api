@@ -2,3 +2,5 @@
 generic-service:
   ingress:
     host: prisoner-download-api.prison.service.justice.gov.uk
+    API_BASE_URL_OAUTH: https://sign-in.hmpps.service.justice.gov.uk/auth
+
