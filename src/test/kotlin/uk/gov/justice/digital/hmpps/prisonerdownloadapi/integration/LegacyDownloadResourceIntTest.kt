@@ -91,7 +91,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
           body = ByteStream.fromString("Can retrieve today's file")
         }
 
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS_API")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOAD__RO")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -102,7 +102,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `will make a token request to auth for client credentials`() = runTest {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS_API")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOAD__RO")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -119,7 +119,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `will receive not found if no file found`() = runTest {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOADS_API")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_DOWNLOAD__RO")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
