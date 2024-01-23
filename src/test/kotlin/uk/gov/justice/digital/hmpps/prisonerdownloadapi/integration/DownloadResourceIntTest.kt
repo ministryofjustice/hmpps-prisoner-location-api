@@ -48,18 +48,31 @@ class DownloadResourceIntTest : IntegrationTestBase() {
     inner class HappyPath {
       @Test
       fun `can retrieve list of files`() = runTest {
+        val byteStream = ByteStream.fromString("Can retrieve list of files")
         s3Client.putObject {
           bucket = s3Properties.bucketName
-          key = "file.zip"
-          body = ByteStream.fromString("Can retrieve list of files")
+          key = "20231023.zip"
+          body = byteStream
+        }
+        s3Client.putObject {
+          bucket = s3Properties.bucketName
+          key = "20240201.zip"
+          body = byteStream
+        }
+        s3Client.putObject {
+          bucket = s3Properties.bucketName
+          key = "20240123.zip"
+          body = byteStream
         }
         webTestClient.get().uri("/list")
           .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD_UI")))
           .exchange()
           .expectStatus().isOk
           .expectBody()
-          .jsonPath("files.size()").isEqualTo(1)
-          .jsonPath("files[0].name").isEqualTo("file.zip")
+          .jsonPath("files.size()").isEqualTo(3)
+          .jsonPath("files[0].name").isEqualTo("20240201.zip")
+          .jsonPath("files[1].name").isEqualTo("20240123.zip")
+          .jsonPath("files[2].name").isEqualTo("20231023.zip")
           .jsonPath("files[0].size").isEqualTo("26")
       }
 

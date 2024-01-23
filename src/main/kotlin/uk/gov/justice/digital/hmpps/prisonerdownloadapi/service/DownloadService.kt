@@ -21,7 +21,7 @@ class DownloadService(
   suspend fun getList(): Downloads =
     s3Client.listObjectsV2 { bucket = s3Properties.bucketName }.contents?.map {
       Download(it.key, it.size, it.lastModified?.toJvmInstant())
-    }.run {
+    }?.sortedByDescending { it.name }.run {
       Downloads(this ?: emptyList())
     }
 
