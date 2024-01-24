@@ -4,13 +4,16 @@ package uk.gov.justice.digital.hmpps.prisonerdownloadapi.service
 
 import aws.sdk.kotlin.services.s3.S3Client
 import aws.sdk.kotlin.services.s3.listObjectsV2
+import aws.sdk.kotlin.services.s3.model.DeleteObjectResponse
 import aws.sdk.kotlin.services.s3.model.ListObjectsV2Response
 import aws.sdk.kotlin.services.s3.model.NoSuchKey
 import aws.sdk.kotlin.services.s3.model.Object
+import aws.sdk.kotlin.services.s3.model.PutObjectResponse
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.check
@@ -141,6 +144,71 @@ class DownloadServiceTest {
           assertThat(it.key).isEqualTo("file.zip")
         },
         any(),
+      )
+    }
+  }
+
+  @Nested
+  internal inner class delete {
+    @Test
+    internal fun `test delete`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenReturn(
+        DeleteObjectResponse { },
+      )
+      val delete = downloadService.delete("file.zip")
+      assertThat(delete).isNotNull
+    }
+
+    @Test
+    internal fun `test delete specifies file`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenReturn(
+        DeleteObjectResponse { },
+      )
+      downloadService.delete("file.zip")
+      verify(s3Client).deleteObject(
+        check {
+          assertThat(it.bucket).isEqualTo("bucket")
+          assertThat(it.key).isEqualTo("file.zip")
+        },
+      )
+    }
+  }
+
+  @Nested
+  internal inner class upload {
+    @Test
+    internal fun `test upload validates no filename specified`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(
+        PutObjectResponse { },
+      )
+      assertThrows<UploadValidationFailure> {
+        downloadService.upload(null, "hello".toByteArray())
+      }
+    }
+
+    @Test
+    internal fun `test upload validates wrong filename`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(
+        PutObjectResponse { },
+      )
+      assertThrows<UploadValidationFailure> {
+        downloadService.upload("file.zip", "hello".toByteArray())
+      }
+    }
+
+    @Test
+    internal fun `test upload success`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(
+        PutObjectResponse { },
+      )
+      downloadService.upload("20240123.zip", "hello".toByteArray())
+
+      verify(s3Client).putObject(
+        check {
+          assertThat(it.bucket).isEqualTo("bucket")
+          assertThat(it.key).isEqualTo("20240123.zip")
+          assertThat(it.body).isNotNull
+        },
       )
     }
   }

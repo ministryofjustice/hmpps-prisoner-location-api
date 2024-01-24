@@ -12,11 +12,23 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.reactive.resource.NoResourceFoundException
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.ExtractFileNotFound
+import uk.gov.justice.digital.hmpps.prisonerdownloadapi.service.UploadValidationFailure
 
 @RestControllerAdvice
 class HmppsPrisonerDownloadApiExceptionHandler {
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(BAD_REQUEST)
+    .body(
+      ErrorResponse(
+        status = BAD_REQUEST,
+        userMessage = "Validation failure: ${e.message}",
+        developerMessage = e.message,
+      ),
+    ).also { log.info("Validation exception: {}", e.message) }
+
+  @ExceptionHandler(UploadValidationFailure::class)
+  fun handleUploadValidationFailure(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_REQUEST)
     .body(
       ErrorResponse(
@@ -38,7 +50,7 @@ class HmppsPrisonerDownloadApiExceptionHandler {
     ).also { log.debug("Forbidden (403) returned with message {}", e.message) }
 
   @ExceptionHandler(NoResourceFoundException::class)
-  fun handleValidationException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+  fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(NOT_FOUND)
     .body(
       ErrorResponse(

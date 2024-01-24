@@ -1,9 +1,12 @@
 package uk.gov.justice.digital.hmpps.prisonerdownloadapi.service
 
 import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.deleteObject
 import aws.sdk.kotlin.services.s3.listObjectsV2
 import aws.sdk.kotlin.services.s3.model.GetObjectRequest
 import aws.sdk.kotlin.services.s3.model.NoSuchKey
+import aws.sdk.kotlin.services.s3.putObject
+import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.toByteArray
 import aws.smithy.kotlin.runtime.time.toJvmInstant
 import org.springframework.stereotype.Service
@@ -40,4 +43,23 @@ class DownloadService(
   } catch (e: NoSuchKey) {
     null
   }
+
+  suspend fun upload(filename: String?, contents: ByteArray) {
+    if (filename == null) throw UploadValidationFailure()
+    if (!filename.matches("[0-9]{8}\\.zip".toRegex())) throw UploadValidationFailure()
+
+    s3Client.putObject {
+      bucket = s3Properties.bucketName
+      key = filename
+      body = ByteStream.fromBytes(contents)
+    }
+  }
+
+  suspend fun delete(filename: String) =
+    s3Client.deleteObject {
+      bucket = s3Properties.bucketName
+      key = filename
+    }
 }
+
+class UploadValidationFailure : RuntimeException("Upload filename must be of format YYYYMMDD.zip e.g. 20240110.zip")
