@@ -7,3 +7,5 @@ api:
   base:
     url:
       oauth: http://localhost:8090/auth
+
+amendment.enabled: true
