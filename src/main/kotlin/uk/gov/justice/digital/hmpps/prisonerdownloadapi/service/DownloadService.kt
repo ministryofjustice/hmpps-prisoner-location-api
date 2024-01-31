@@ -9,10 +9,14 @@ import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.toByteArray
 import aws.smithy.kotlin.runtime.time.toJvmInstant
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.AuthenticationHolder
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.S3Properties
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.Download
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.Downloads
+import uk.gov.justice.hmpps.sqs.audit.HmppsAuditEvent
+import uk.gov.justice.hmpps.sqs.audit.HmppsAuditService
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
 
@@ -20,6 +24,9 @@ import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
 class DownloadService(
   private val s3Client: S3Client,
   private val s3Properties: S3Properties,
+  private val auditService: HmppsAuditService,
+  private val authenticationHolder: AuthenticationHolder,
+  @Value("\${spring.application.name}") private val auditServiceName: String,
 ) {
   suspend fun getList(): Downloads =
     s3Client.listObjectsV2 { bucket = s3Properties.bucketName }.contents?.map {
@@ -34,6 +41,15 @@ class DownloadService(
   }.contents?.firstOrNull()?.run { Download(key, size, lastModified?.toJvmInstant()) }
 
   suspend fun download(filename: String): ByteArray? = try {
+    auditService.publishEvent(
+      HmppsAuditEvent(
+        what = "API_DOWNLOAD",
+        subjectId = filename,
+        who = authenticationHolder.currentPrincipal(),
+        service = auditServiceName,
+      ),
+    )
+
     s3Client.getObject(
       GetObjectRequest {
         bucket = s3Properties.bucketName
@@ -48,6 +64,14 @@ class DownloadService(
     if (filename == null) throw UploadValidationFailure()
     if (!filename.matches("[0-9]{8}\\.zip".toRegex())) throw UploadValidationFailure()
 
+    auditService.publishEvent(
+      HmppsAuditEvent(
+        what = "API_UPLOAD",
+        subjectId = filename,
+        who = authenticationHolder.currentPrincipal(),
+        service = auditServiceName,
+      ),
+    )
     s3Client.putObject {
       bucket = s3Properties.bucketName
       key = filename
@@ -55,11 +79,21 @@ class DownloadService(
     }
   }
 
-  suspend fun delete(filename: String) =
+  suspend fun delete(filename: String) {
+    auditService.publishEvent(
+      HmppsAuditEvent(
+        what = "API_DELETE",
+        subjectId = filename,
+        who = authenticationHolder.currentPrincipal(),
+        service = auditServiceName,
+      ),
+    )
+
     s3Client.deleteObject {
       bucket = s3Properties.bucketName
       key = filename
     }
+  }
 }
 
 class UploadValidationFailure : RuntimeException("Upload filename must be of format YYYYMMDD.zip e.g. 20240110.zip")

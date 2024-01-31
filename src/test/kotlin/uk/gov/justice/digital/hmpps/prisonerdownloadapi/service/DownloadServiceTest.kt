@@ -11,6 +11,7 @@ import aws.sdk.kotlin.services.s3.model.Object
 import aws.sdk.kotlin.services.s3.model.PutObjectResponse
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -19,17 +20,29 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.check
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.AuthenticationHolder
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.S3Properties
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.resource.Download
+import uk.gov.justice.hmpps.sqs.audit.HmppsAuditService
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 class DownloadServiceTest {
   private val s3Client: S3Client = mock()
+  private val auditService: HmppsAuditService = mock()
+  private val authenticationHolder: AuthenticationHolder = mock()
   private val downloadService: DownloadService = DownloadService(
     s3Client,
     S3Properties(region = "region", bucketName = "bucket"),
+    auditService,
+    authenticationHolder,
+    "download-service",
   )
+
+  @BeforeEach
+  internal fun setup() = runTest {
+    whenever(authenticationHolder.currentPrincipal()).thenReturn("my-user")
+  }
 
   @Nested
   internal inner class getList {
@@ -146,6 +159,22 @@ class DownloadServiceTest {
         any(),
       )
     }
+
+    @Test
+    internal fun `calls audit service`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenReturn(
+        "hello".toByteArray(),
+      )
+      downloadService.download("file.zip")
+      verify(auditService).publishEvent(
+        check {
+          assertThat(it.what).isEqualTo("API_DOWNLOAD")
+          assertThat(it.who).isEqualTo("my-user")
+          assertThat(it.service).isEqualTo("download-service")
+          assertThat(it.subjectId).isEqualTo("file.zip")
+        },
+      )
+    }
   }
 
   @Nested
@@ -169,6 +198,19 @@ class DownloadServiceTest {
         check {
           assertThat(it.bucket).isEqualTo("bucket")
           assertThat(it.key).isEqualTo("file.zip")
+        },
+      )
+    }
+
+    @Test
+    internal fun `calls audit service`() = runTest {
+      downloadService.delete("file.zip")
+      verify(auditService).publishEvent(
+        check {
+          assertThat(it.what).isEqualTo("API_DELETE")
+          assertThat(it.who).isEqualTo("my-user")
+          assertThat(it.service).isEqualTo("download-service")
+          assertThat(it.subjectId).isEqualTo("file.zip")
         },
       )
     }
@@ -208,6 +250,23 @@ class DownloadServiceTest {
           assertThat(it.bucket).isEqualTo("bucket")
           assertThat(it.key).isEqualTo("20240123.zip")
           assertThat(it.body).isNotNull
+        },
+      )
+    }
+
+    @Test
+    internal fun `calls audit service`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(
+        PutObjectResponse { },
+      )
+      downloadService.upload("20240123.zip", "hello".toByteArray())
+
+      verify(auditService).publishEvent(
+        check {
+          assertThat(it.what).isEqualTo("API_UPLOAD")
+          assertThat(it.who).isEqualTo("my-user")
+          assertThat(it.service).isEqualTo("download-service")
+          assertThat(it.subjectId).isEqualTo("20240123.zip")
         },
       )
     }
