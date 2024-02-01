@@ -122,7 +122,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
       @Test
       fun `can retrieve today's file`() = runTest {
         val today = LocalDate.now()
-        val todayFileName = "${today.format(DateTimeFormatter.ofPattern("YYYYMMDD"))}.zip"
+        val todayFileName = "${today.format(DateTimeFormatter.ofPattern("yyyyMMdd"))}.zip"
         s3Client.putObject {
           bucket = s3Properties.bucketName
           key = todayFileName
@@ -137,13 +137,13 @@ class DownloadResourceIntTest : IntegrationTestBase() {
           .jsonPath("name").isEqualTo(todayFileName)
           .jsonPath("size").isEqualTo(25)
           .jsonPath("lastModified").value<String> {
-            assertThat(it).startsWith(today.format(DateTimeFormatter.ofPattern("YYYY-MM-DD")))
+            assertThat(it).startsWith(today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
           }
       }
 
       @Test
       fun `will receive not found if no file from today`() = runTest {
-        val yesterday = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("YYYYMMDD"))
+        val yesterday = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"))
         s3Client.putObject {
           bucket = s3Properties.bucketName
           key = "$yesterday.zip"
