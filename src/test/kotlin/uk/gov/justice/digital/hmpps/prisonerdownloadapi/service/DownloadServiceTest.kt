@@ -18,6 +18,8 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.check
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.prisonerdownloadapi.config.AuthenticationHolder
@@ -27,7 +29,7 @@ import uk.gov.justice.hmpps.sqs.audit.HmppsAuditService
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-class DownloadServiceTest {
+internal class DownloadServiceTest {
   private val s3Client: S3Client = mock()
   private val auditService: HmppsAuditService = mock()
   private val authenticationHolder: AuthenticationHolder = mock()
@@ -36,7 +38,6 @@ class DownloadServiceTest {
     S3Properties(region = "region", bucketName = "bucket"),
     auditService,
     authenticationHolder,
-    "download-service",
   )
 
   @BeforeEach
@@ -167,12 +168,14 @@ class DownloadServiceTest {
       )
       downloadService.download("file.zip")
       verify(auditService).publishEvent(
-        check {
-          assertThat(it.what).isEqualTo("API_DOWNLOAD")
-          assertThat(it.who).isEqualTo("my-user")
-          assertThat(it.service).isEqualTo("download-service")
-          assertThat(it.subjectId).isEqualTo("file.zip")
-        },
+        what = eq("API_DOWNLOAD"),
+        subjectId = eq("file.zip"),
+        subjectType = isNull(),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
       )
     }
   }
@@ -206,12 +209,14 @@ class DownloadServiceTest {
     internal fun `calls audit service`() = runTest {
       downloadService.delete("file.zip")
       verify(auditService).publishEvent(
-        check {
-          assertThat(it.what).isEqualTo("API_DELETE")
-          assertThat(it.who).isEqualTo("my-user")
-          assertThat(it.service).isEqualTo("download-service")
-          assertThat(it.subjectId).isEqualTo("file.zip")
-        },
+        what = eq("API_DELETE"),
+        subjectId = eq("file.zip"),
+        subjectType = isNull(),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
       )
     }
   }
@@ -262,12 +267,14 @@ class DownloadServiceTest {
       downloadService.upload("20240123.zip", "hello".toByteArray())
 
       verify(auditService).publishEvent(
-        check {
-          assertThat(it.what).isEqualTo("API_UPLOAD")
-          assertThat(it.who).isEqualTo("my-user")
-          assertThat(it.service).isEqualTo("download-service")
-          assertThat(it.subjectId).isEqualTo("20240123.zip")
-        },
+        what = eq("API_UPLOAD"),
+        subjectId = eq("20240123.zip"),
+        subjectType = isNull(),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
       )
     }
   }
