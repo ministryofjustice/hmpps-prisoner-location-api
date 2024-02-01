@@ -72,4 +72,4 @@ class DownloadService(
   }
 }
 
-class UploadValidationFailure : RuntimeException("Upload filename must be of format YYYYMMDD.zip e.g. 20240110.zip")
+class UploadValidationFailure : RuntimeException("Upload filename must be of format yyyyMMdd.zip e.g. 20240110.zip")

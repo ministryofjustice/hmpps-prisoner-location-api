@@ -120,7 +120,7 @@ internal class DownloadServiceTest {
       verify(s3Client).listObjectsV2(
         check {
           assertThat(it.bucket).isEqualTo("bucket")
-          val today = LocalDate.now().format(DateTimeFormatter.ofPattern("YYYYMMDD"))
+          val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
           assertThat(it.prefix).isEqualTo("$today.zip")
         },
       )
