@@ -65,7 +65,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
           body = byteStream
         }
         webTestClient.get().uri("/list")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD_UI")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION_UI")))
           .exchange()
           .expectStatus().isOk
           .expectBody()
@@ -79,7 +79,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
       @Test
       fun `can retrieve empty list of files`() = runTest {
         webTestClient.get().uri("/list")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD_UI")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION_UI")))
           .exchange()
           .expectStatus().isOk
           .expectBody()
@@ -130,7 +130,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
         }
 
         webTestClient.get().uri("/today")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD_UI")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION_UI")))
           .exchange()
           .expectStatus().isOk
           .expectBody()
@@ -151,7 +151,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
         }
 
         webTestClient.get().uri("/today")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD_UI")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION_UI")))
           .exchange()
           .expectStatus().isNotFound
       }
@@ -198,7 +198,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
         }
 
         webTestClient.get().uri("/download/file.zip")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD_UI")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION_UI")))
           .exchange()
           .expectStatus().isOk
           .expectBody(String::class.java).isEqualTo("Can retrieve today's file")
@@ -207,7 +207,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
       @Test
       fun `will receive not found if no file found`() = runTest {
         webTestClient.get().uri("/download/file.zip")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD_UI")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION_UI")))
           .exchange()
           .expectStatus().isNotFound
       }
@@ -215,7 +215,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
       @Test
       fun `can use api role to download`() = runTest {
         webTestClient.get().uri("/download/file.zip")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD__RO")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION__RO")))
           .exchange()
           .expectStatus().isNotFound
       }

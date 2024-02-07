@@ -4,8 +4,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class HmppsPrisonerDownloadApi
+class HmppsPrisonerLocationApi
 
 fun main(args: Array<String>) {
-  runApplication<HmppsPrisonerDownloadApi>(*args)
+  runApplication<HmppsPrisonerLocationApi>(*args)
 }
