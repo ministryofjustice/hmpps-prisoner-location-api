@@ -1,6 +1,6 @@
 {
   "role": {
-    "name": "hmpps-prisoner-download-api"
+    "name": "hmpps-prisoner-location-api"
   },
   "customDimensions": {
     "service.version": "${BUILD_NUMBER}"

@@ -8,7 +8,7 @@ generic-service:
     shutdown: '34 21 * * 1-5' # Stop at 9.34pm UTC Monday-Friday
 
   ingress:
-    host: prisoner-download-api-dev.prison.service.justice.gov.uk
+    host: prisoner-location-api-dev.prison.service.justice.gov.uk
 
   env:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json

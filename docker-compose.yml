@@ -1,10 +1,10 @@
 version: "3"
 services:
-  hmpps-prisoner-download-api:
+  hmpps-prisoner-location-api:
     build:
       context: .
     network_mode: "host"
-    container_name: hmpps-prisoner-download-api
+    container_name: hmpps-prisoner-location-api
     ports:
       - "8081:8080"
     healthcheck:
@@ -31,7 +31,7 @@ services:
     image: localstack/localstack:3
     networks:
       - hmpps
-    container_name: localstack-pd
+    container_name: localstack-pl
     ports:
       - "4566:4566"
     environment:

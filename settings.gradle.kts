@@ -1,1 +1,1 @@
-rootProject.name = "hmpps-prisoner-download-api"
+rootProject.name = "hmpps-prisoner-location-api"

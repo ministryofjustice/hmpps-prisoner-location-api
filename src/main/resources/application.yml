@@ -4,7 +4,7 @@ info.app:
 
 spring:
   application:
-    name: hmpps-prisoner-download-api
+    name: hmpps-prisoner-location-api
   codec:
     max-in-memory-size: 10MB
 
