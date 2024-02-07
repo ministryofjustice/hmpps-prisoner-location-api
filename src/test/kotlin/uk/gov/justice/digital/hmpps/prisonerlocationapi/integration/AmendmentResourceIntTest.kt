@@ -63,7 +63,7 @@ class AmendmentResourceIntTest : IntegrationTestBase() {
         }
 
         webTestClient.delete().uri("/delete/file.zip")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD__RW")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION__RW")))
           .exchange()
           .expectStatus().isNoContent
 
@@ -80,7 +80,7 @@ class AmendmentResourceIntTest : IntegrationTestBase() {
       @Test
       fun `will receive no content if no file found`() = runTest {
         webTestClient.delete().uri("/delete/some_file.zip")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD__RW")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION__RW")))
           .exchange()
           .expectStatus().isNoContent
       }
@@ -139,7 +139,7 @@ class AmendmentResourceIntTest : IntegrationTestBase() {
               part("file", FileSystemResource(file))
             }.build(),
           )
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD__RW")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION__RW")))
           .exchange()
           .expectStatus().isNoContent
 
@@ -160,7 +160,7 @@ class AmendmentResourceIntTest : IntegrationTestBase() {
       fun `can upload a file wrong name`() = runTest {
         val file = File("src/test/resources/hello.zip").apply { writeText("hello") }
         webTestClient.post().uri("/upload")
-          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_DOWNLOAD__RW")))
+          .headers(setAuthorisation(roles = listOf("ROLE_PRISONER_LOCATION__RW")))
           .bodyValue(
             MultipartBodyBuilder().apply {
               part("file", FileSystemResource(file))

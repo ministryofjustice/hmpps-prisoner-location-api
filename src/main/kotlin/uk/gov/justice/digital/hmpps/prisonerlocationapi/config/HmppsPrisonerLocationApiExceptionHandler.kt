@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.prisonerlocationapi.resource.ExtractFileNotF
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.service.UploadValidationFailure
 
 @RestControllerAdvice
-class HmppsPrisonerDownloadApiExceptionHandler {
+class HmppsPrisonerLocationApiExceptionHandler {
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_REQUEST)

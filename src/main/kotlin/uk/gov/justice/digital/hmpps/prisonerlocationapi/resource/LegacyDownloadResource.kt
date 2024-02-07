@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.prisonerlocationapi.service.DownloadService
 @RestController
 @Validated
 @RequestMapping("/legacy", produces = [MediaType.APPLICATION_JSON_VALUE])
-@PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOAD__RO')")
+@PreAuthorize("hasRole('ROLE_PRISONER_LOCATION__RO')")
 class LegacyDownloadResource(private val downloadService: DownloadService) {
 
   @GetMapping("/download/{filename}", produces = ["application/x-zip-compressed"])
@@ -27,7 +27,7 @@ class LegacyDownloadResource(private val downloadService: DownloadService) {
        This is a legacy endpoint provided for backwards compatibility.  It is expected that 
        clients will transition onto the /download/{filename} endpoint using bearer (oauth2)
        authentication instead.
-       Requires role PRISONER_DOWNLOAD__RO""",
+       Requires role PRISONER_LOCATION__RO""",
     deprecated = true,
     responses = [
       ApiResponse(responseCode = "200", description = "File download"),

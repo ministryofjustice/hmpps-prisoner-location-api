@@ -32,7 +32,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
     .info(
       Info().title("NOMIS Prisoner Location API")
         .version(version)
-        .description("Provides the NOMIS extract as a download")
+        .description("Provides the NOMIS location extract as a download")
         .contact(Contact().name("HMPPS Digital Studio").email("feedback@digital.justice.gov.uk")),
     )
     .components(

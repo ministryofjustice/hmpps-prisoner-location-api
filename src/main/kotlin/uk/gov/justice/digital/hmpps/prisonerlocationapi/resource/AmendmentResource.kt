@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.prisonerlocationapi.service.DownloadService
 @Validated
 @RequestMapping("/", produces = [MediaType.APPLICATION_JSON_VALUE])
 @ConditionalOnProperty(name = ["amendment.enabled"], havingValue = "true")
-@PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOAD__RW')")
+@PreAuthorize("hasRole('ROLE_PRISONER_LOCATION__RW')")
 class AmendmentResource(private val downloadService: DownloadService) {
   @DeleteMapping("/delete/{filename}")
   @ResponseStatus(HttpStatus.NO_CONTENT)

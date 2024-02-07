@@ -23,7 +23,7 @@ class DownloadResource(private val downloadService: DownloadService) {
   @GetMapping("/list")
   @Operation(
     summary = "List all downloads",
-    description = "List all available extracts. Requires role PRISONER_DOWNLOAD_UI",
+    description = "List all available extracts. Requires role PRISONER_LOCATION_UI",
     responses = [
       ApiResponse(responseCode = "200", description = "List of extracts returned"),
       ApiResponse(
@@ -38,13 +38,13 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
-  @PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOAD_UI')")
+  @PreAuthorize("hasRole('ROLE_PRISONER_LOCATION_UI')")
   suspend fun getList(): Downloads = downloadService.getList()
 
   @GetMapping("/today")
   @Operation(
     summary = "Retrieve today's download extract information",
-    description = "Retrieves information on today's download. Requires role PRISONER_DOWNLOAD_UI",
+    description = "Retrieves information on today's download. Requires role PRISONER_LOCATION_UI",
     responses = [
       ApiResponse(responseCode = "200", description = "Information on today's file"),
       ApiResponse(
@@ -64,13 +64,13 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
-  @PreAuthorize("hasRole('ROLE_PRISONER_DOWNLOAD_UI')")
+  @PreAuthorize("hasRole('ROLE_PRISONER_LOCATION_UI')")
   suspend fun getToday(): Download = downloadService.getToday() ?: throw ExtractFileNotFound()
 
   @GetMapping("/download/{filename}", produces = ["application/x-zip-compressed"])
   @Operation(
     summary = "Download specified file",
-    description = "Download specified file. Requires role PRISONER_DOWNLOAD_UI or PRISONER_DOWNLOAD__RO",
+    description = "Download specified file. Requires role PRISONER_LOCATION_UI or PRISONER_LOCATION__RO",
     responses = [
       ApiResponse(responseCode = "200", description = "File download"),
       ApiResponse(
@@ -90,7 +90,7 @@ class DownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_PRISONER_DOWNLOAD_UI', 'ROLE_PRISONER_DOWNLOAD__RO')")
+  @PreAuthorize("hasAnyRole('ROLE_PRISONER_LOCATION_UI', 'ROLE_PRISONER_LOCATION__RO')")
   suspend fun downloadFile(@PathVariable filename: String): ByteArray = downloadService.download(filename) ?: throw ExtractFileNotFound()
 }
 
