@@ -3,7 +3,7 @@ generic-service:
   replicaCount: 2
 
   ingress:
-    host: prisoner-download-api-preprod.prison.service.justice.gov.uk
+    host: prisoner-location-api-preprod.prison.service.justice.gov.uk
 
   env:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
