@@ -22,6 +22,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
+import uk.gov.justice.hmpps.kotlin.auth.AuthAwareReactiveTokenConverter
 
 @Configuration
 @EnableWebFluxSecurity
@@ -40,7 +41,7 @@ class ResourceServerConfiguration {
         ).forEach { authorize(it, permitAll) }
         authorize(anyExchange, authenticated)
       }
-      oauth2ResourceServer { jwt { jwtAuthenticationConverter = AuthAwareTokenConverter() } }
+      oauth2ResourceServer { jwt { jwtAuthenticationConverter = AuthAwareReactiveTokenConverter() } }
     }
 
   @Bean

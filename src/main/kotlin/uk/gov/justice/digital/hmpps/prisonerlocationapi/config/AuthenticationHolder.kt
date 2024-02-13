@@ -4,6 +4,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.ReactiveSecurityContextHolder
 import org.springframework.stereotype.Component
+import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
 
 @Component
 class AuthenticationHolder {
