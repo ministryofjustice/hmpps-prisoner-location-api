@@ -13,7 +13,7 @@ configurations {
 ext["okhttp.version"] = "5.0.0-alpha.11"
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.1.0-mh")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.1.0")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:3.1.1")
