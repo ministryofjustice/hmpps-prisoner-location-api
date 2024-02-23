@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.15.2"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.15.3"
   kotlin("plugin.spring") version "1.9.22"
 }
 
@@ -13,12 +13,12 @@ configurations {
 ext["okhttp.version"] = "5.0.0-alpha.11"
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.1.1")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.1.2")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:3.1.1")
 
-  implementation("aws.sdk.kotlin:s3:1.0.59")
+  implementation("aws.sdk.kotlin:s3:1.0.63")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.0")
@@ -33,7 +33,7 @@ dependencies {
     exclude(group = "io.swagger.core.v3")
   }
   testImplementation("io.swagger.core.v3:swagger-core-jakarta:2.2.20")
-  testImplementation("org.wiremock:wiremock-standalone:3.4.0")
+  testImplementation("org.wiremock:wiremock-standalone:3.4.1")
 }
 
 kotlin {
