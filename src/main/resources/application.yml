@@ -17,7 +17,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${api.base.url.oauth}/.well-known/jwks.json
+          jwk-set-uri: ${api.base.url.hmpps-auth}/.well-known/jwks.json
 
 server:
   port: 8080

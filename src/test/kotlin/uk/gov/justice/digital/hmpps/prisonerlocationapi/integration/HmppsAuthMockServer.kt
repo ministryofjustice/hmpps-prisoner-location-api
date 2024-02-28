@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
-class OAuthMockServer : WireMockServer(8090) {
+class HmppsAuthMockServer : WireMockServer(8090) {
   fun stubHealthPing(status: Int) {
     stubFor(
       WireMock.get("/auth/health/ping").willReturn(
@@ -53,7 +53,7 @@ class OAuthMockServer : WireMockServer(8090) {
 class HmppsAuthApiExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
   companion object {
     @JvmField
-    val hmppsAuth = OAuthMockServer()
+    val hmppsAuth = HmppsAuthMockServer()
   }
 
   override fun beforeAll(context: ExtensionContext) {
