@@ -13,10 +13,10 @@ configurations {
 ext["okhttp.version"] = "5.0.0-alpha.11"
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.2.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.2.4")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:3.1.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:3.1.3")
 
   implementation("aws.sdk.kotlin:s3:1.1.21")
 
@@ -33,7 +33,7 @@ dependencies {
     exclude(group = "io.swagger.core.v3")
   }
   testImplementation("io.swagger.core.v3:swagger-core-jakarta:2.2.21")
-  testImplementation("org.wiremock:wiremock-standalone:3.5.3")
+  testImplementation("org.wiremock:wiremock-standalone:3.5.4")
 }
 
 kotlin {
