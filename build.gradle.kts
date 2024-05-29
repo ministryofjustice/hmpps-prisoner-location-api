@@ -10,15 +10,15 @@ configurations {
 }
 
 // okhttp only used by the AWS SDK kotlin library so okay to pin
-ext["okhttp.version"] = "5.0.0-alpha.11"
+ext["okhttp.version"] = "5.0.0-alpha.14"
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.2.4")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.0.0")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:3.1.3")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.0.0")
 
-  implementation("aws.sdk.kotlin:s3:1.2.20")
+  implementation("aws.sdk.kotlin:s3:1.2.21")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.1")
