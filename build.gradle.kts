@@ -25,8 +25,7 @@ dependencies {
 
   implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0")
 
-  testImplementation("io.jsonwebtoken:jjwt-impl:0.12.6")
-  testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.0.2-beta")
   testImplementation("io.opentelemetry:opentelemetry-sdk-testing")
   testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.22") {

@@ -23,7 +23,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
     inner class Security {
       @Test
       fun `access unauthorised when no authentication supplied`() {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf()))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john"))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .exchange()
@@ -32,7 +32,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `access unauthorised when no username supplied`() {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf()))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john"))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("", "smith") }
@@ -42,7 +42,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `access unauthorised when no password supplied`() {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf()))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john"))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "") }
@@ -62,7 +62,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `access forbidden with no role`() {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf()))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john"))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -72,7 +72,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `access forbidden with wrong role`() {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_BANANAS")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john", roles = listOf("ROLE_BANANAS")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -91,7 +91,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
           body = ByteStream.fromString("Can retrieve today's file")
         }
 
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_LOCATION__RO")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john", roles = listOf("ROLE_PRISONER_LOCATION__RO")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -102,7 +102,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `will make a token request to auth for client credentials`() = runTest {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_LOCATION__RO")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john", roles = listOf("ROLE_PRISONER_LOCATION__RO")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }
@@ -119,7 +119,7 @@ class LegacyDownloadResourceIntTest : IntegrationTestBase() {
 
       @Test
       fun `will receive not found if no file found`() = runTest {
-        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwt(subject = "john", roles = listOf("ROLE_PRISONER_LOCATION__RO")))
+        hmppsAuth.stubGrantToken(jwtAuthHelper.createJwtAccessToken(clientId = "john", roles = listOf("ROLE_PRISONER_LOCATION__RO")))
 
         webTestClient.get().uri("/legacy/download/file.zip")
           .headers { it.setBasicAuth("john", "smith") }

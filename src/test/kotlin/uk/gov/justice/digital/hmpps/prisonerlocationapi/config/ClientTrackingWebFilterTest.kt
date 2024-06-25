@@ -17,8 +17,9 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.server.WebFilterChain
 import reactor.core.publisher.Mono
+import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
-@Import(JwtAuthHelper::class, ClientTrackingWebFilter::class)
+@Import(JwtAuthorisationHelper::class, ClientTrackingWebFilter::class)
 @ContextConfiguration(initializers = [ConfigDataApplicationContextInitializer::class])
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension::class)
@@ -29,14 +30,14 @@ class ClientTrackingWebFilterTest {
 
   @Suppress("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
-  private lateinit var jwtAuthHelper: JwtAuthHelper
+  private lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   private val webFilterChain: WebFilterChain = WebFilterChain { Mono.empty() }
   private val tracer: Tracer = otelTesting.openTelemetry.getTracer("test")
 
   @Test
   fun shouldAddClientIdAndUserNameToInsightTelemetry() {
-    val token = jwtAuthHelper.createJwt("bob")
+    val token = jwtAuthHelper.createJwtAccessToken(username = "bob", clientId = "prisoner-location-client")
 
     val exchange = MockServerWebExchange.builder(
       MockServerHttpRequest.get("http://prisoner-location")
@@ -56,7 +57,7 @@ class ClientTrackingWebFilterTest {
 
   @Test
   fun shouldAddOnlyClientIdIfUsernameNullToInsightTelemetry() {
-    val token = jwtAuthHelper.createJwt(null)
+    val token = jwtAuthHelper.createJwtAccessToken(clientId = "prisoner-location-client")
     val exchange = MockServerWebExchange.builder(
       MockServerHttpRequest.get("http://prisoner-location")
         .header(HttpHeaders.AUTHORIZATION, "Bearer $token").build(),
