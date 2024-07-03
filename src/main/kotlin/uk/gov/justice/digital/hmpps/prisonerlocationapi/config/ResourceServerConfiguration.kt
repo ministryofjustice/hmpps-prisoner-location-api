@@ -6,13 +6,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.ReactiveAuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.config.web.server.invoke
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest
 import org.springframework.security.oauth2.client.endpoint.WebClientReactiveClientCredentialsTokenResponseClient
 import org.springframework.security.oauth2.client.registration.ClientRegistration
@@ -23,26 +19,14 @@ import org.springframework.security.web.server.util.matcher.PathPatternParserSer
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import uk.gov.justice.hmpps.kotlin.auth.AuthAwareReactiveTokenConverter
+import uk.gov.justice.hmpps.kotlin.auth.HmppsReactiveResourceServerConfiguration
+import uk.gov.justice.hmpps.kotlin.auth.dsl.ResourceServerConfigurationCustomizer
 
 @Configuration
-@EnableWebFluxSecurity
-@EnableReactiveMethodSecurity(useAuthorizationManager = false)
-class ResourceServerConfiguration {
+class ResourceServerConfiguration : HmppsReactiveResourceServerConfiguration() {
   @Bean
-  fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
-    http {
-      // Can't have CSRF protection as requires session
-      csrf { disable() }
-      authorizeExchange {
-        listOf(
-          "/webjars/**", "/favicon.ico", "/csrf",
-          "/health/**", "/info", "/h2-console/**",
-          "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-        ).forEach { authorize(it, permitAll) }
-        authorize(anyExchange, authenticated)
-      }
-      oauth2ResourceServer { jwt { jwtAuthenticationConverter = AuthAwareReactiveTokenConverter() } }
-    }
+  override fun hmppsSecurityWebFilterChain(http: ServerHttpSecurity, customizer: ResourceServerConfigurationCustomizer): SecurityWebFilterChain =
+    super.hmppsSecurityWebFilterChain(http, customizer)
 
   @Bean
   @Order(1)
@@ -81,12 +65,10 @@ class AuthReactiveAuthenticationManager(hmppsAuthWebClient: WebClient, private v
       .build().let { OAuth2ClientCredentialsGrantRequest(it) }
 
     // to get the client roles we have to parse the access token response and grab the authorities from them
-    return client.getTokenResponse(request).flatMap { jwtDecoder.decode(it.accessToken.tokenValue) }.map { jwt ->
-      UsernamePasswordAuthenticationToken(
-        authentication.principal,
-        authentication.credentials,
-        (jwt.claims["authorities"] as List<*>).map { SimpleGrantedAuthority(it.toString()) },
-      )
+    return client.getTokenResponse(request).flatMap {
+      jwtDecoder.decode(it.accessToken.tokenValue)
+    }.flatMap {
+      AuthAwareReactiveTokenConverter().convert(it)
     }
   }
 
