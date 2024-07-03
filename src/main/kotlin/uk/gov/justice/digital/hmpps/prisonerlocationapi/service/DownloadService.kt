@@ -10,10 +10,10 @@ import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.toByteArray
 import aws.smithy.kotlin.runtime.time.toJvmInstant
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.prisonerlocationapi.config.AuthenticationHolder
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.config.S3Properties
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.resource.Download
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.resource.Downloads
+import uk.gov.justice.hmpps.kotlin.auth.HmppsReactiveAuthenticationHolder
 import uk.gov.justice.hmpps.sqs.audit.HmppsAuditService
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
@@ -23,7 +23,7 @@ class DownloadService(
   private val s3Client: S3Client,
   private val s3Properties: S3Properties,
   private val auditService: HmppsAuditService,
-  private val authenticationHolder: AuthenticationHolder,
+  private val authenticationHolder: HmppsReactiveAuthenticationHolder,
 ) {
   suspend fun getList(): Downloads =
     s3Client.listObjectsV2 { bucket = s3Properties.bucketName }.contents?.map {
@@ -38,7 +38,7 @@ class DownloadService(
   }.contents?.firstOrNull()?.run { Download(key, size, lastModified?.toJvmInstant()) }
 
   suspend fun download(filename: String): ByteArray? = try {
-    auditService.publishEvent(what = "API_DOWNLOAD", subjectId = filename, who = authenticationHolder.currentPrincipal())
+    auditService.publishEvent(what = "API_DOWNLOAD", subjectId = filename, who = authenticationHolder.getPrincipal())
 
     s3Client.getObject(
       GetObjectRequest {
@@ -54,7 +54,7 @@ class DownloadService(
     if (filename == null) throw UploadValidationFailure()
     if (!filename.matches("[0-9]{8}\\.zip".toRegex())) throw UploadValidationFailure()
 
-    auditService.publishEvent(what = "API_UPLOAD", subjectId = filename, who = authenticationHolder.currentPrincipal())
+    auditService.publishEvent(what = "API_UPLOAD", subjectId = filename, who = authenticationHolder.getPrincipal())
     s3Client.putObject {
       bucket = s3Properties.bucketName
       key = filename
@@ -63,7 +63,7 @@ class DownloadService(
   }
 
   suspend fun delete(filename: String) {
-    auditService.publishEvent(what = "API_DELETE", subjectId = filename, who = authenticationHolder.currentPrincipal())
+    auditService.publishEvent(what = "API_DELETE", subjectId = filename, who = authenticationHolder.getPrincipal())
 
     s3Client.deleteObject {
       bucket = s3Properties.bucketName

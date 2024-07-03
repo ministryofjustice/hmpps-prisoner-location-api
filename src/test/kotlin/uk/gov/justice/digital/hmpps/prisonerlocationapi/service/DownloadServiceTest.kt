@@ -11,10 +11,10 @@ import aws.sdk.kotlin.services.s3.model.Object
 import aws.sdk.kotlin.services.s3.model.PutObjectResponse
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.check
@@ -22,28 +22,28 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.prisonerlocationapi.config.AuthenticationHolder
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.config.S3Properties
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.resource.Download
+import uk.gov.justice.hmpps.kotlin.auth.HmppsReactiveAuthenticationHolder
 import uk.gov.justice.hmpps.sqs.audit.HmppsAuditService
+import uk.gov.justice.hmpps.test.kotlin.auth.WithMockAuthUser
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+@ExtendWith(SpringExtension::class)
+@EnableReactiveMethodSecurity
+@WithMockAuthUser(username = "my-user")
 internal class DownloadServiceTest {
   private val s3Client: S3Client = mock()
   private val auditService: HmppsAuditService = mock()
-  private val authenticationHolder: AuthenticationHolder = mock()
   private val downloadService: DownloadService = DownloadService(
     s3Client,
     S3Properties(region = "region", bucketName = "bucket"),
     auditService,
-    authenticationHolder,
+    HmppsReactiveAuthenticationHolder(),
   )
-
-  @BeforeEach
-  internal fun setup() = runTest {
-    whenever(authenticationHolder.currentPrincipal()).thenReturn("my-user")
-  }
 
   @Nested
   internal inner class getList {
