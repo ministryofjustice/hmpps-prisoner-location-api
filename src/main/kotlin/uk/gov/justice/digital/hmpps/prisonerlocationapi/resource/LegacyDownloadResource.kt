@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -21,6 +23,7 @@ import uk.gov.justice.digital.hmpps.prisonerlocationapi.service.DownloadService
 class LegacyDownloadResource(private val downloadService: DownloadService) {
 
   @GetMapping("/download/{filename}", produces = ["application/x-zip-compressed"])
+  @Tag(name = "Deprecated")
   @Operation(
     summary = "Download specified file using basic authentication",
     description = """Download specified file using basic authentication.
@@ -28,6 +31,7 @@ class LegacyDownloadResource(private val downloadService: DownloadService) {
        clients will transition onto the /download/{filename} endpoint using bearer (oauth2)
        authentication instead.
        Requires role PRISONER_LOCATION__RO""",
+    security = [SecurityRequirement(name = "view-prisoner-location-data-role")],
     deprecated = true,
     responses = [
       ApiResponse(responseCode = "200", description = "File download"),

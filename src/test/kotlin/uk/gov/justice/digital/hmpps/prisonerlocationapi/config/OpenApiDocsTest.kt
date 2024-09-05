@@ -82,19 +82,32 @@ class OpenApiDocsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `the security scheme is setup for bearer tokens`() {
-    val bearerJwts = JSONArray()
-    bearerJwts.addAll(listOf("read", "write"))
+  fun `the security scheme is setup for bearer tokens for the prisoner location ui role`() {
     webTestClient.get()
       .uri("/v3/api-docs")
       .accept(MediaType.APPLICATION_JSON)
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.components.securitySchemes.bearer-jwt.type").isEqualTo("http")
-      .jsonPath("$.components.securitySchemes.bearer-jwt.scheme").isEqualTo("bearer")
-      .jsonPath("$.components.securitySchemes.bearer-jwt.bearerFormat").isEqualTo("JWT")
-      .jsonPath("$.security[0].bearer-jwt")
-      .isEqualTo(bearerJwts)
+      .jsonPath("$.components.securitySchemes.prisoner-location-ui-role.type").isEqualTo("http")
+      .jsonPath("$.components.securitySchemes.prisoner-location-ui-role.scheme").isEqualTo("bearer")
+      .jsonPath("$.components.securitySchemes.prisoner-location-ui-role.bearerFormat").isEqualTo("JWT")
+      .jsonPath("$.security[0].prisoner-location-ui-role")
+      .isEqualTo(JSONArray().apply { this.add("read") })
+  }
+
+  @Test
+  fun `the security scheme is setup for bearer tokens for the prisoner location ro role`() {
+    webTestClient.get()
+      .uri("/v3/api-docs")
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.components.securitySchemes.view-prisoner-location-data-role.type").isEqualTo("http")
+      .jsonPath("$.components.securitySchemes.view-prisoner-location-data-role.scheme").isEqualTo("bearer")
+      .jsonPath("$.components.securitySchemes.view-prisoner-location-data-role.bearerFormat").isEqualTo("JWT")
+      .jsonPath("$.security[0].view-prisoner-location-data-role")
+      .isEqualTo(JSONArray().apply { this.add("read") })
   }
 }
