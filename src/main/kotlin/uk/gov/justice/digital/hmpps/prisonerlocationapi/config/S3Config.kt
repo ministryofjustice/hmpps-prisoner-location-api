@@ -7,6 +7,8 @@ import aws.sdk.kotlin.services.s3.headBucket
 import aws.sdk.kotlin.services.s3.model.BucketLocationConstraint
 import aws.sdk.kotlin.services.s3.model.NotFound
 import aws.smithy.kotlin.runtime.net.url.Url
+import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -32,7 +34,7 @@ class S3Config(private val s3Properties: S3Properties) {
 
   @Bean
   @ConditionalOnProperty(name = ["s3.provider"], havingValue = "aws")
-  fun s3Client(): S3Client = runBlocking {
+  fun s3Client(): S3Client = runBlocking(Context.current().asContextElement()) {
     S3Client.fromEnvironment {
       region = s3Properties.region
     }.also {
@@ -42,7 +44,7 @@ class S3Config(private val s3Properties: S3Properties) {
 
   @Bean("awsS3Client")
   @ConditionalOnProperty(name = ["s3.provider"], havingValue = "localstack")
-  fun awsS3ClientLocalstack(): S3Client = runBlocking {
+  fun awsS3ClientLocalstack(): S3Client = runBlocking(Context.current().asContextElement()) {
     S3Client.fromEnvironment {
       region = s3Properties.region
       endpointUrl = Url.parse(s3Properties.localstackUrl!!)

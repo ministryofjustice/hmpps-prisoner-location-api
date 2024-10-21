@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.prisonerlocationapi.health
 
 import aws.sdk.kotlin.services.s3.S3Client
 import aws.sdk.kotlin.services.s3.headBucket
+import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.reactor.mono
 import org.springframework.boot.actuate.health.Health
 import org.springframework.boot.actuate.health.ReactiveHealthIndicator
@@ -14,7 +16,7 @@ class S3Health(
   private val s3Properties: S3Properties,
   private val s3Client: S3Client,
 ) : ReactiveHealthIndicator {
-  override fun health(): Mono<Health> = mono {
+  override fun health(): Mono<Health> = mono(Context.current().asContextElement()) {
     with(s3Properties) {
       try {
         s3Client.headBucket { bucket = bucketName }
