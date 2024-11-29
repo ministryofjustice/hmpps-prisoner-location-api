@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.prisonerlocationapi.health
 
 import aws.sdk.kotlin.services.s3.S3Client
-import aws.sdk.kotlin.services.s3.headBucket
+import aws.sdk.kotlin.services.s3.getBucketLocation
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.reactor.mono
@@ -19,7 +19,7 @@ class S3Health(
   override fun health(): Mono<Health> = mono(Context.current().asContextElement()) {
     with(s3Properties) {
       try {
-        s3Client.headBucket { bucket = bucketName }
+        s3Client.getBucketLocation { bucket = bucketName }
         Health.up().withDetail("bucketName", bucketName).build()
       } catch (e: Exception) {
         Health.down().withDetail("bucketName", bucketName).withException(e).build()
