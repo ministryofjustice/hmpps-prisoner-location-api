@@ -25,12 +25,11 @@ class DownloadService(
   private val auditService: HmppsAuditService,
   private val authenticationHolder: HmppsReactiveAuthenticationHolder,
 ) {
-  suspend fun getList(): Downloads =
-    s3Client.listObjectsV2 { bucket = s3Properties.bucketName }.contents?.map {
-      Download(it.key, it.size, it.lastModified?.toJvmInstant())
-    }?.sortedByDescending { it.name }.run {
-      Downloads(this ?: emptyList())
-    }
+  suspend fun getList(): Downloads = s3Client.listObjectsV2 { bucket = s3Properties.bucketName }.contents?.map {
+    Download(it.key, it.size, it.lastModified?.toJvmInstant())
+  }?.sortedByDescending { it.name }.run {
+    Downloads(this ?: emptyList())
+  }
 
   suspend fun getToday(): Download? = s3Client.listObjectsV2 {
     bucket = s3Properties.bucketName
