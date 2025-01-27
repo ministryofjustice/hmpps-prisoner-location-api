@@ -1,6 +1,6 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "6.1.2"
-  kotlin("plugin.spring") version "2.0.21"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "7.0.0-beta"
+  kotlin("plugin.spring") version "2.1.0"
 }
 
 configurations {
@@ -18,21 +18,22 @@ dependencies {
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.2.2")
 
-  implementation("aws.sdk.kotlin:s3:1.3.103")
+  implementation("aws.sdk.kotlin:s3:1.4.5")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.1")
+  // Leaving at 1.43.0 to match the version used in App Insights https://github.com/microsoft/ApplicationInsights-Java/blob/3.6.2/dependencyManagement/build.gradle.kts#L14
   implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.43.0")
 
-  implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.7.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.3")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.1.1")
   testImplementation("io.opentelemetry:opentelemetry-sdk-testing")
   testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.24") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.25") {
     exclude(group = "io.swagger.core.v3")
   }
-  testImplementation("io.swagger.core.v3:swagger-core-jakarta:2.2.27")
+  testImplementation("io.swagger.core.v3:swagger-core-jakarta:2.2.28")
   testImplementation("org.wiremock:wiremock-standalone:3.10.0")
 }
 

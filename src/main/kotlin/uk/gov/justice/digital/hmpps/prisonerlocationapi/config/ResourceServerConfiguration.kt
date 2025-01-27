@@ -25,17 +25,15 @@ import uk.gov.justice.hmpps.kotlin.auth.dsl.ResourceServerConfigurationCustomize
 @Configuration
 class ResourceServerConfiguration : HmppsReactiveResourceServerConfiguration() {
   @Bean
-  override fun hmppsSecurityWebFilterChain(http: ServerHttpSecurity, customizer: ResourceServerConfigurationCustomizer): SecurityWebFilterChain =
-    super.hmppsSecurityWebFilterChain(http, customizer)
+  override fun hmppsSecurityWebFilterChain(http: ServerHttpSecurity, customizer: ResourceServerConfigurationCustomizer): SecurityWebFilterChain = super.hmppsSecurityWebFilterChain(http, customizer)
 
   @Bean
   @Order(1)
-  fun legacyFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
-    http {
-      securityMatcher(PathPatternParserServerWebExchangeMatcher("/legacy/**"))
-      authorizeExchange { authorize(anyExchange, authenticated) }
-      httpBasic { authenticationManager }
-    }
+  fun legacyFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain = http {
+    securityMatcher(PathPatternParserServerWebExchangeMatcher("/legacy/**"))
+    authorizeExchange { authorize(anyExchange, authenticated) }
+    httpBasic { authenticationManager }
+  }
 
   @Bean
   fun reactiveAuthenticationManager(

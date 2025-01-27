@@ -4,7 +4,6 @@ import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
-import io.swagger.v3.oas.models.media.DateTimeSchema
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.security.SecurityRequirement
@@ -67,7 +66,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
       val properties = schema.properties ?: mutableMapOf()
       for (propertyName in properties.keys) {
         val propertySchema = properties[propertyName]!!
-        if (propertySchema is DateTimeSchema) {
+        if (propertySchema.format == "date-time") {
           properties.replace(
             propertyName,
             StringSchema()
@@ -82,10 +81,9 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
   }
 }
 
-private fun SecurityScheme.addBearerJwtRequirement(role: String): SecurityScheme =
-  type(SecurityScheme.Type.HTTP)
-    .scheme("bearer")
-    .bearerFormat("JWT")
-    .`in`(SecurityScheme.In.HEADER)
-    .name("Authorization")
-    .description("A HMPPS Auth access token with the `$role` role.")
+private fun SecurityScheme.addBearerJwtRequirement(role: String): SecurityScheme = type(SecurityScheme.Type.HTTP)
+  .scheme("bearer")
+  .bearerFormat("JWT")
+  .`in`(SecurityScheme.In.HEADER)
+  .name("Authorization")
+  .description("A HMPPS Auth access token with the `$role` role.")
