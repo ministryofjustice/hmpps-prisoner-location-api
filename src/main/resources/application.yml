@@ -54,3 +54,5 @@ management:
 s3:
   provider: aws
   region: eu-west-2
+
+springdoc.swagger-ui.version: 5.20.0
