@@ -20,7 +20,7 @@ on:
         required: false
       services:
         type: string
-        default: 's3,sqs,sns,es,ec2,lambda'
+        default: 's3,sqs'
         required: false
       localstack_tag:
         type: string
