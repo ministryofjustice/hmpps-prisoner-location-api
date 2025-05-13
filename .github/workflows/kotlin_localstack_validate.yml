@@ -29,9 +29,9 @@ on:
 permissions:
   contents: read
 jobs:
-  template_job:
+  kotlin-localstack-validate:
+    name: validate the Kotlin-localstack app
     runs-on: ubuntu-latest
-    # Label used to access the service container
     services:
       localstack:
         image: localstack/localstack:${{ inputs.localstack_tag }}
@@ -64,7 +64,11 @@ jobs:
           cache-dependency-path: |
             *.gradle*
             **/gradle-wrapper.properties
-      ## INSERT COMMANDS HERE
+      - name: gradlew check
+        shell: bash
+        run: |
+          export JAVA_OPTS="${{ inputs.java_options }}"
+          ./gradlew check
       - name: upload the artifacts
         if: always()
         uses: actions/upload-artifact@v4
