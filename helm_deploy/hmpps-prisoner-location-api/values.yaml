@@ -6,7 +6,7 @@ generic-service:
   replicaCount: 4
 
   image:
-    repository: quay.io/hmpps/hmpps-prisoner-location-api
+    repository: ghcr.io/ministryofjustice/hmpps-prisoner-location-api
     tag: app_version
     port: 8080
 
@@ -35,7 +35,7 @@ generic-service:
     AMENDMENT_ENABLED: "false"
 
   namespace_secrets:
-    application-insights:
+    hmpps-prisoner-location-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
 
     hmpps-prisoner-location-bucket:
