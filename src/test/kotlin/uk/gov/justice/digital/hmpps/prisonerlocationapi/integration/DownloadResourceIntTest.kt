@@ -51,17 +51,17 @@ class DownloadResourceIntTest : IntegrationTestBase() {
         val byteStream = ByteStream.fromString("Can retrieve list of files")
         s3Client.putObject {
           bucket = s3Properties.bucketName
-          key = "20231023.zip"
+          key = "C_NOMIS_OFFENDER_23102023_01.zip"
           body = byteStream
         }
         s3Client.putObject {
           bucket = s3Properties.bucketName
-          key = "20240201.zip"
+          key = "C_NOMIS_OFFENDER_01022024_02.zip"
           body = byteStream
         }
         s3Client.putObject {
           bucket = s3Properties.bucketName
-          key = "20240123.zip"
+          key = "C_NOMIS_OFFENDER_23012024_01.zip"
           body = byteStream
         }
         webTestClient.get().uri("/list")
@@ -69,11 +69,13 @@ class DownloadResourceIntTest : IntegrationTestBase() {
           .exchange()
           .expectStatus().isOk
           .expectBody()
+          .consumeWith(System.out::println)
           .jsonPath("files.size()").isEqualTo(3)
-          .jsonPath("files[0].name").isEqualTo("20240201.zip")
-          .jsonPath("files[1].name").isEqualTo("20240123.zip")
-          .jsonPath("files[2].name").isEqualTo("20231023.zip")
+          .jsonPath("files[0].name").isEqualTo("C_NOMIS_OFFENDER_01022024_02.zip")
+          .jsonPath("files[1].name").isEqualTo("C_NOMIS_OFFENDER_23012024_01.zip")
+          .jsonPath("files[2].name").isEqualTo("C_NOMIS_OFFENDER_23102023_01.zip")
           .jsonPath("files[0].size").isEqualTo("26")
+          .jsonPath("files[0].isoDateName").doesNotExist()
       }
 
       @Test
@@ -122,7 +124,7 @@ class DownloadResourceIntTest : IntegrationTestBase() {
       @Test
       fun `can retrieve today's file`() = runTest {
         val today = LocalDate.now()
-        val todayFileName = "${today.format(DateTimeFormatter.ofPattern("yyyyMMdd"))}.zip"
+        val todayFileName = "some file ${today.format(DateTimeFormatter.ofPattern("ddMMyyyy"))}_01.zip"
         s3Client.putObject {
           bucket = s3Properties.bucketName
           key = todayFileName
