@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.prisonerlocationapi.resource
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -122,6 +123,20 @@ data class Download(
 
   @Schema(description = "Date time the file was last modified")
   val lastModified: Instant?,
-)
+) {
+  private companion object {
+    private val dateRegex = ".*(?<day>\\d{2})(?<month>\\d{2})(?<year>\\d{4})".toRegex()
+    private val replacement = "\${year}\${month}\${day}"
+  }
+
+  @JsonIgnore
+  fun getIsoDateName(): String? {
+    // names will be of format C_NOMIS_OFFENDER_DDMMYYY_On.zip.
+    // This function then formats to C_NOMIS_OFFENDER_YYYYMMDD_On.zip.
+    // So C_NOMIS_OFFENDER_28052025_01.zip will become C_NOMIS_OFFENDER_20250528_01.zip
+    // whick will then allow us to sort descending to get the latest file
+    return name?.let { name.replace(dateRegex, replacement) }
+  }
+}
 
 class ExtractFileNotFound : RuntimeException("Extract file not found")
