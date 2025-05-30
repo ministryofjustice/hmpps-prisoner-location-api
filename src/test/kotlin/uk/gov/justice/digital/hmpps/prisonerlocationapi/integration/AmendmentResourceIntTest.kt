@@ -132,7 +132,7 @@ class AmendmentResourceIntTest : IntegrationTestBase() {
     inner class HappyPath {
       @Test
       fun `can upload a file`() = runTest {
-        val file = File("src/test/resources/some file 20012024_01.zip").apply { writeText("hello") }
+        val file = File("src/test/resources/20240120.zip").apply { writeText("hello") }
         webTestClient.post().uri("/upload")
           .bodyValue(
             MultipartBodyBuilder().apply {
@@ -146,7 +146,7 @@ class AmendmentResourceIntTest : IntegrationTestBase() {
         s3Client.getObject(
           GetObjectRequest {
             bucket = s3Properties.bucketName
-            key = "some file 20012024_01.zip"
+            key = "20240120.zip"
           },
         ) {
           assertThat(it.body?.decodeToString()).startsWith("hello")
