@@ -44,7 +44,6 @@ internal class DownloadServiceTest {
     auditService,
     HmppsReactiveAuthenticationHolder(),
   )
-  private val today = LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"))
 
   @Nested
   internal inner class getList {
@@ -54,19 +53,15 @@ internal class DownloadServiceTest {
         ListObjectsV2Response {
           contents = listOf(
             Object {
-              key = "a file with 20012024.zip"
+              key = "20240120"
               size = 20
             },
             Object {
-              key = "another file 23022024_01"
+              key = "20240223"
               size = 23
             },
             Object {
-              key = "another file 23022024_02"
-              size = 22
-            },
-            Object {
-              key = "oldest file 01102023.zip"
+              key = "20231001"
               size = 1
             },
           )
@@ -75,10 +70,9 @@ internal class DownloadServiceTest {
       val downloads = downloadService.getList()
       assertThat(downloads).isNotNull()
       assertThat(downloads.files).containsExactly(
-        Download(name = "another file 23022024_02", size = 22, lastModified = null),
-        Download(name = "another file 23022024_01", size = 23, lastModified = null),
-        Download(name = "a file with 20012024.zip", size = 20, lastModified = null),
-        Download(name = "oldest file 01102023.zip", size = 1, lastModified = null),
+        Download(name = "20240223", size = 23, lastModified = null),
+        Download(name = "20240120", size = 20, lastModified = null),
+        Download(name = "20231001", size = 1, lastModified = null),
       )
     }
   }
@@ -91,16 +85,8 @@ internal class DownloadServiceTest {
         ListObjectsV2Response {
           contents = listOf(
             Object {
-              key = "20240223.zip"
+              key = "20240223"
               size = 23
-            },
-            Object {
-              key = "20240223_02.zip"
-              size = 23
-            },
-            Object {
-              key = "SOMETHING_${today}_02.zip"
-              size = 25
             },
           )
         },
@@ -108,38 +94,7 @@ internal class DownloadServiceTest {
       val download = downloadService.getToday()
       assertThat(download).isNotNull()
       assertThat(download).isEqualTo(
-        Download(name = "SOMETHING_${today}_02.zip", size = 25, lastModified = null),
-      )
-    }
-
-    @Test
-    internal fun `test get today multiple for today found`() = runTest {
-      whenever(s3Client.listObjectsV2(any())).thenReturn(
-        ListObjectsV2Response {
-          contents = listOf(
-            Object {
-              key = "20240223.zip"
-              size = 23
-            },
-            Object {
-              key = "20240223_02.zip"
-              size = 23
-            },
-            Object {
-              key = "SOMETHING_${today}_01.zip"
-              size = 24
-            },
-            Object {
-              key = "SOMETHING_${today}_02.zip"
-              size = 25
-            },
-          )
-        },
-      )
-      val download = downloadService.getToday()
-      assertThat(download).isNotNull()
-      assertThat(download).isEqualTo(
-        Download(name = "SOMETHING_${today}_02.zip", size = 25, lastModified = null),
+        Download(name = "20240223", size = 23, lastModified = null),
       )
     }
 
@@ -155,23 +110,7 @@ internal class DownloadServiceTest {
     }
 
     @Test
-    internal fun `test get today no file found for today`() = runTest {
-      whenever(s3Client.listObjectsV2(any())).thenReturn(
-        ListObjectsV2Response {
-          contents = listOf(
-            Object {
-              key = "20240223.zip"
-              size = 23
-            },
-          )
-        },
-      )
-      val download = downloadService.getToday()
-      assertThat(download).isNull()
-    }
-
-    @Test
-    internal fun `test get today requests file for today when multiple`() = runTest {
+    internal fun `test get today requests file for today`() = runTest {
       whenever(s3Client.listObjectsV2(any())).thenReturn(
         ListObjectsV2Response {
           contents = emptyList()
@@ -181,6 +120,8 @@ internal class DownloadServiceTest {
       verify(s3Client).listObjectsV2(
         check {
           assertThat(it.bucket).isEqualTo("bucket")
+          val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+          assertThat(it.prefix).isEqualTo("$today.zip")
         },
       )
     }
@@ -307,12 +248,12 @@ internal class DownloadServiceTest {
       whenever(s3Client.putObject(any())).thenReturn(
         PutObjectResponse { },
       )
-      downloadService.upload("something 230102024_01.zip", "hello".toByteArray())
+      downloadService.upload("20240123.zip", "hello".toByteArray())
 
       verify(s3Client).putObject(
         check {
           assertThat(it.bucket).isEqualTo("bucket")
-          assertThat(it.key).isEqualTo("something 230102024_01.zip")
+          assertThat(it.key).isEqualTo("20240123.zip")
           assertThat(it.body).isNotNull
         },
       )
@@ -323,11 +264,11 @@ internal class DownloadServiceTest {
       whenever(s3Client.putObject(any())).thenReturn(
         PutObjectResponse { },
       )
-      downloadService.upload("230102024_01.zip", "hello".toByteArray())
+      downloadService.upload("20240123.zip", "hello".toByteArray())
 
       verify(auditService).publishEvent(
         what = eq("API_UPLOAD"),
-        subjectId = eq("230102024_01.zip"),
+        subjectId = eq("20240123.zip"),
         subjectType = isNull(),
         correlationId = isNull(),
         `when` = any(),

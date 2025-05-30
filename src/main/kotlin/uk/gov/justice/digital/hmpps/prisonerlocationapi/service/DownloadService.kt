@@ -16,9 +16,7 @@ import uk.gov.justice.digital.hmpps.prisonerlocationapi.resource.Downloads
 import uk.gov.justice.hmpps.kotlin.auth.HmppsReactiveAuthenticationHolder
 import uk.gov.justice.hmpps.sqs.audit.HmppsAuditService
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
-import java.time.temporal.ChronoField
+import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
 
 @Service
 class DownloadService(
@@ -27,26 +25,16 @@ class DownloadService(
   private val auditService: HmppsAuditService,
   private val authenticationHolder: HmppsReactiveAuthenticationHolder,
 ) {
-  private val dateFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
-    .appendValue(ChronoField.DAY_OF_MONTH, 2)
-    .appendValue(ChronoField.MONTH_OF_YEAR, 2)
-    .appendValue(ChronoField.YEAR, 4)
-    .parseStrict()
-    .toFormatter()
-
   suspend fun getList(): Downloads = s3Client.listObjectsV2 { bucket = s3Properties.bucketName }.contents?.map {
     Download(it.key, it.size, it.lastModified?.toJvmInstant())
-  }?.sortedByDescending { it.getIsoDateName() }.run {
+  }?.sortedByDescending { it.name }.run {
     Downloads(this ?: emptyList())
   }
 
-  // filenames will be C_NOMIS_OFFENDER_29052025_01.zip etc.
-  // Need to cope with a newer _02.zip file so sort and then grab the first one we find
   suspend fun getToday(): Download? = s3Client.listObjectsV2 {
     bucket = s3Properties.bucketName
-  }.contents?.sortedByDescending { it.key }?.firstOrNull {
-    it.key?.contains("${LocalDate.now().format(dateFormatter)}") == true
-  }?.run { Download(key, size, lastModified?.toJvmInstant()) }
+    prefix = "${LocalDate.now().format(BASIC_ISO_DATE)}.zip"
+  }.contents?.firstOrNull()?.run { Download(key, size, lastModified?.toJvmInstant()) }
 
   suspend fun download(filename: String): ByteArray? = try {
     auditService.publishEvent(what = "API_DOWNLOAD", subjectId = filename, who = authenticationHolder.getPrincipal())
@@ -57,13 +45,13 @@ class DownloadService(
         key = filename
       },
     ) { it.body?.toByteArray() }
-  } catch (_: NoSuchKey) {
+  } catch (e: NoSuchKey) {
     null
   }
 
   suspend fun upload(filename: String?, contents: ByteArray) {
     if (filename == null) throw UploadValidationFailure()
-    if (!filename.contains("[0-9]{8}_[0-9][0-9].zip".toRegex())) throw UploadValidationFailure()
+    if (!filename.matches("[0-9]{8}\\.zip".toRegex())) throw UploadValidationFailure()
 
     auditService.publishEvent(what = "API_UPLOAD", subjectId = filename, who = authenticationHolder.getPrincipal())
     s3Client.putObject {
@@ -83,4 +71,4 @@ class DownloadService(
   }
 }
 
-class UploadValidationFailure : RuntimeException("Upload filename must be of format ddMMyyyy_0n.zip e.g. 10012024_01.zip")
+class UploadValidationFailure : RuntimeException("Upload filename must be of format yyyyMMdd.zip e.g. 20240110.zip")
