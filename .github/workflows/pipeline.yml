@@ -34,11 +34,12 @@ jobs:
       environment: ${{ matrix.environments }}
   kotlin_validate:
     name: Validate the kotlin
-    uses: ./.github/workflows/kotlin_localstack_validate.yml # LOCAL_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
-      services: s3,sqs
-      localstack_tag: "4"
+      localstack-services: s3,sqs
+      localstack-tag: "4"
+      java-options: '-Xmx512m -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dorg.gradle.daemon=false -Dkotlin.compiler.execution.strategy=in-process -Dorg.gradle.workers.max=1'
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
