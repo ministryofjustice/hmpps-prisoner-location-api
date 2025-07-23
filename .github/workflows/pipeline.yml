@@ -34,15 +34,16 @@ jobs:
       environment: ${{ matrix.environments }}
   kotlin_validate:
     name: Validate the kotlin
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_verify.yml@v2 # WORKFLOW_VERSION
+    uses: ./.github/workflows/gradle_localstack_verify.yml # LOCAL_VERSION
     secrets: inherit
     with:
       localstack-services: s3,sqs
       localstack-tag: "4"
+      gradle-command: './gradlew assemble check'
+      upload-build-artifacts: true
   build:
     name: Build docker image from hmpps-github-actions
-    if: github.ref == 'refs/heads/main'
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
+    uses: ./.github/workflows/docker_build.yml # LOCAL_VERSION
     needs:
       - kotlin_validate
     with:
@@ -51,6 +52,7 @@ jobs:
       additional_docker_tag: ${{ inputs.additional_docker_tag }}
       push: ${{ inputs.push || true }}
       docker_multiplatform: false
+      tag_latest: false
   deploy_dev:
     name: Deploy to the dev environment
     if: github.ref == 'refs/heads/main'
