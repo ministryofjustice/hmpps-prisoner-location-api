@@ -32,6 +32,14 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ matrix.environments }}
+  app_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.app_version.outputs.version }}
+    steps:
+      - id: app_version
+        name: Application version creators
+        uses: ministryofjustice/hmpps-github-actions/.github/actions/build-test-and-deploy/create_app_version@v2 # WORKFLOW_VERSION
   gradle_verify:
     name: Run the tests
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_verify.yml@v2 # WORKFLOW_VERSION
@@ -39,8 +47,10 @@ jobs:
     with:
       localstack-services: s3,sqs
       localstack-tag: "4"
-      gradle-command: './gradlew assemble check'
-      upload-build-artifacts: true
+      gradle-command: 'BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
+      upload-build-artifacts: ${{ github.ref == 'refs/heads/main' }}
+    needs:
+      - app_version
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
