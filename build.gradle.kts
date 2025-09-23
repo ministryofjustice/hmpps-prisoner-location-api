@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.0.2"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.0"
   kotlin("plugin.spring") version "2.2.20"
 }
 
@@ -19,7 +19,7 @@ dependencies {
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.11")
 
-  implementation("aws.sdk.kotlin:s3:1.5.41")
+  implementation("aws.sdk.kotlin:s3:1.5.44")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
   // Leaving at 1.43.0 to match the version used in App Insights https://github.com/microsoft/ApplicationInsights-Java/blob/3.6.2/dependencyManagement/build.gradle.kts#L14
