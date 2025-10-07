@@ -47,6 +47,7 @@ jobs:
     with:
       localstack-services: s3,sqs
       localstack-tag: "4"
+      java-version: "25"
       gradle-command: 'BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
       upload-build-artifacts: ${{ github.ref == 'refs/heads/main' }}
     needs:
