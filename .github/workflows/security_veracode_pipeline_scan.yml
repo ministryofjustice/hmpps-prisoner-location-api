@@ -10,6 +10,7 @@ jobs:
     with:
       gradle-command: 'BUILD_NUMBER=veracode ./gradlew assemble'
       upload-build-artifacts: true
+      java-version: "25"
       build-artifact-name: 'build-results'
       upload-test-artifacts: false
     permissions:
