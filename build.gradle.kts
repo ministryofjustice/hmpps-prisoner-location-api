@@ -4,8 +4,11 @@ plugins {
 }
 
 configurations {
-  implementation { exclude(module = "spring-boot-starter-web") }
-  implementation { exclude(module = "spring-boot-starter-tomcat") }
+  implementation {
+    exclude(module = "spring-boot-starter-web")
+    exclude(module = "spring-boot-starter-tomcat")
+    exclude(module = "commons-logging")
+  }
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
