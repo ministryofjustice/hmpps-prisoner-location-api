@@ -13,7 +13,7 @@ configurations {
 }
 
 // okhttp only used by the AWS SDK kotlin library so okay to pin
-ext["okhttp.version"] = "5.0.0-alpha.14"
+ext["okhttp.version"] = "5.1.0"
 ext["kotlin-coroutines.version"] = "1.10.2"
 
 dependencies {
@@ -25,7 +25,7 @@ dependencies {
   implementation("aws.sdk.kotlin:s3:1.5.60")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
-  // Leaving at 1.43.0 to match the version used in App Insights https://github.com/microsoft/ApplicationInsights-Java/blob/3.6.2/dependencyManagement/build.gradle.kts#L14
+  // Should match the version used in App Insights pulled in by the plugin - https://github.com/ministryofjustice/hmpps-gradle-spring-boot/blob/main/src/main/kotlin/uk/gov/justice/digital/hmpps/gradle/configmanagers/AppInsightsConfigManager.kt#L10
   implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.52.0")
 
   implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13")
