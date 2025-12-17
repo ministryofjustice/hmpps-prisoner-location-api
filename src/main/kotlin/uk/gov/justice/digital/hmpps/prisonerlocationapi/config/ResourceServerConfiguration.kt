@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.ReactiveAuthenticationManager
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.config.web.server.invoke
 import org.springframework.security.core.Authentication
@@ -23,6 +24,7 @@ import uk.gov.justice.hmpps.kotlin.auth.HmppsReactiveResourceServerConfiguration
 import uk.gov.justice.hmpps.kotlin.auth.dsl.ResourceServerConfigurationCustomizer
 
 @Configuration
+@EnableWebFluxSecurity
 class ResourceServerConfiguration : HmppsReactiveResourceServerConfiguration() {
   @Bean
   override fun hmppsSecurityWebFilterChain(http: ServerHttpSecurity, customizer: ResourceServerConfigurationCustomizer): SecurityWebFilterChain = super.hmppsSecurityWebFilterChain(http, customizer)
@@ -50,9 +52,9 @@ class AuthReactiveAuthenticationManager(hmppsAuthWebClient: WebClient, private v
     .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
     .build()
 
-  override fun authenticate(authentication: Authentication?): Mono<Authentication> {
-    if (authentication == null || authentication.name.isNullOrBlank() || authentication.credentials?.toString()?.isBlank() == true) {
-      log.info("Credentials missing for user {}", authentication?.name)
+  override fun authenticate(authentication: Authentication): Mono<Authentication> {
+    if (authentication.name.isBlank() || authentication.credentials.toString().isBlank()) {
+      log.info("Credentials missing for user {}", authentication.name)
       throw BadCredentialsException("Missing credentials")
     }
     log.info("Found credentials of $authentication")
