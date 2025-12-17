@@ -5,8 +5,8 @@ import aws.sdk.kotlin.services.s3.getBucketLocation
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.reactor.mono
-import org.springframework.boot.actuate.health.Health
-import org.springframework.boot.actuate.health.ReactiveHealthIndicator
+import org.springframework.boot.health.contributor.Health
+import org.springframework.boot.health.contributor.ReactiveHealthIndicator
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.config.S3Properties
