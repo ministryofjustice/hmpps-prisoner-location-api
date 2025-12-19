@@ -14,9 +14,6 @@ class WebClientConfiguration(
   @Value("\${api.timeout:10s}") val timeout: Duration,
 ) {
   @Bean
-  fun webClientBuilder(): WebClient.Builder = WebClient.builder()
-
-  @Bean
   fun hmppsAuthWebClient(builder: WebClient.Builder): WebClient = builder.reactiveHealthWebClient(hmppsAuthEndpoint, timeout)
 
   @Bean
