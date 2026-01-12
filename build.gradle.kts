@@ -7,9 +7,7 @@ configurations {
   implementation {
     exclude(module = "spring-boot-starter-web")
     exclude(module = "spring-boot-starter-tomcat")
-    exclude(group = "com.fasterxml.jackson.module", module = "jackson-module-kotlin")
   }
-  testImplementation { exclude(group = "org.junit.vintage") }
 }
 
 // okhttp only used by the AWS SDK kotlin library so okay to pin

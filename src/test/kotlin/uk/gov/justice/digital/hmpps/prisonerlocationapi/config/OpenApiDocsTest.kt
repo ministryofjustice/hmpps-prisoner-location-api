@@ -4,19 +4,17 @@ import io.swagger.v3.parser.OpenAPIV3Parser
 import net.minidev.json.JSONArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
-import org.springframework.test.context.ActiveProfiles
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.integration.IntegrationTestBase
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
 class OpenApiDocsTest : IntegrationTestBase() {
   @LocalServerPort
-  private var port: Int = 0
+  private val port: Int = 0
 
   @Test
   fun `open api docs are available`() {
@@ -55,7 +53,7 @@ class OpenApiDocsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `the swagger json contains the version number`() {
+  fun `the open api json contains the version number`() {
     webTestClient.get()
       .uri("/v3/api-docs")
       .accept(MediaType.APPLICATION_JSON)
@@ -67,7 +65,7 @@ class OpenApiDocsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `the generated swagger for date times hasn't got the time zone`() {
+  fun `the generated open api for date times hasn't got the time zone`() {
     webTestClient.get()
       .uri("/v3/api-docs")
       .accept(MediaType.APPLICATION_JSON)
@@ -78,38 +76,71 @@ class OpenApiDocsTest : IntegrationTestBase() {
       .jsonPath("$.components.schemas.Download.properties.lastModified.description")
       .isEqualTo("Date time the file was last modified")
       .jsonPath("$.components.schemas.Download.properties.lastModified.type").isEqualTo("string")
-      .jsonPath("$.components.schemas.Download.properties.lastModified.pattern")
-      .isEqualTo("""^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}${'$'}""")
-      .jsonPath("$.components.schemas.Download.properties.lastModified.format").doesNotExist()
+      .jsonPath("$.components.schemas.Download.properties.lastModified.format").isEqualTo("date-time")
   }
 
   @Test
-  fun `the security scheme is setup for bearer tokens for the prisoner location ui role`() {
+  fun `the open api json path security requirements are valid`() {
+    val result = OpenAPIV3Parser().readLocation("http://localhost:$port/v3/api-docs", null, null)
+
+    // The security requirements of each path don't appear to be validated like they are at https://editor.swagger.io/
+    // We therefore need to grab all the valid security requirements and check that each path only contains those items
+    val securityRequirements = result.openAPI.security.flatMap { it.keys }
+    result.openAPI.paths.forEach { pathItem ->
+      assertThat(pathItem.value.get.security.flatMap { it.keys }).isSubsetOf(securityRequirements)
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = ["prisoner-location-ui-role, ROLE_PRISONER_LOCATION_UI", "view-prisoner-location-data-role, ROLE_PRISONER_LOCATION__RO"])
+  fun `the security scheme is setup for bearer tokens`(key: String, role: String) {
     webTestClient.get()
       .uri("/v3/api-docs")
       .accept(MediaType.APPLICATION_JSON)
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.components.securitySchemes.prisoner-location-ui-role.type").isEqualTo("http")
-      .jsonPath("$.components.securitySchemes.prisoner-location-ui-role.scheme").isEqualTo("bearer")
-      .jsonPath("$.components.securitySchemes.prisoner-location-ui-role.bearerFormat").isEqualTo("JWT")
-      .jsonPath("$.security[0].prisoner-location-ui-role")
-      .isEqualTo(JSONArray().apply { this.add("read") })
+      .jsonPath("$.components.securitySchemes.$key.type").isEqualTo("http")
+      .jsonPath("$.components.securitySchemes.$key.scheme").isEqualTo("bearer")
+      .jsonPath("$.components.securitySchemes.$key.description").value<String> {
+        assertThat(it).contains(role)
+      }
+      .jsonPath("$.components.securitySchemes.$key.bearerFormat").isEqualTo("JWT")
+      .jsonPath("$.security[0].$key").isEqualTo(JSONArray().apply { add("read") })
   }
 
   @Test
-  fun `the security scheme is setup for bearer tokens for the prisoner location ro role`() {
+  fun `all endpoints have a security scheme defined`() {
     webTestClient.get()
       .uri("/v3/api-docs")
       .accept(MediaType.APPLICATION_JSON)
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.components.securitySchemes.view-prisoner-location-data-role.type").isEqualTo("http")
-      .jsonPath("$.components.securitySchemes.view-prisoner-location-data-role.scheme").isEqualTo("bearer")
-      .jsonPath("$.components.securitySchemes.view-prisoner-location-data-role.bearerFormat").isEqualTo("JWT")
-      .jsonPath("$.security[0].view-prisoner-location-data-role")
-      .isEqualTo(JSONArray().apply { this.add("read") })
+      .jsonPath("$.paths[*][*][?(!@.security)]").doesNotExist()
+  }
+
+  @Test
+  fun `the open api json doesn't include LocalTime`() {
+    webTestClient.get()
+      .uri("/v3/api-docs")
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("components.schemas.LocalTime").doesNotExist()
+  }
+
+  @Test
+  fun `the response contains required fields`() {
+    webTestClient.get()
+      .uri("/v3/api-docs")
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.components.schemas.ErrorResponse.required").value<List<String>> {
+        assertThat(it).containsExactly("status")
+      }
   }
 }
