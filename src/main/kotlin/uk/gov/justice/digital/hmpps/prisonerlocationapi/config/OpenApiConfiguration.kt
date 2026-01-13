@@ -4,13 +4,10 @@ import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
-import io.swagger.v3.oas.models.media.Schema
-import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 import io.swagger.v3.oas.models.tags.Tag
-import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -59,26 +56,6 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
         .addList("prisoner-location-ui-role", listOf("read"))
         .addList("view-prisoner-location-data-role", listOf("read")),
     )
-
-  @Bean
-  fun openAPICustomiser(): OpenApiCustomizer = OpenApiCustomizer {
-    it.components.schemas.forEach { (_, schema: Schema<*>) ->
-      val properties = schema.properties ?: mutableMapOf()
-      for (propertyName in properties.keys) {
-        val propertySchema = properties[propertyName]!!
-        if (propertySchema.format == "date-time") {
-          properties.replace(
-            propertyName,
-            StringSchema()
-              .example("2021-07-05T10:35:17")
-              .pattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$")
-              .description(propertySchema.description)
-              .required(propertySchema.required),
-          )
-        }
-      }
-    }
-  }
 }
 
 private fun SecurityScheme.addBearerJwtRequirement(role: String): SecurityScheme = type(SecurityScheme.Type.HTTP)

@@ -120,7 +120,7 @@ data class Download(
   @Schema(description = "File size")
   val size: Long?,
 
-  @Schema(description = "Date time the file was last modified")
+  @Schema(description = "Date time the file was last modified", example = "2021-07-05T10:35:17")
   val lastModified: Instant?,
 )
 
