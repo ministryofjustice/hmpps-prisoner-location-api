@@ -20,9 +20,9 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.security:spring-security-access")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:6.0.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:6.0.2-beta")
 
-  implementation("aws.sdk.kotlin:s3:1.6.3")
+  implementation("aws.sdk.kotlin:s3:1.6.5")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
   // Should match the version used in App Insights pulled in by the plugin - https://github.com/ministryofjustice/hmpps-gradle-spring-boot/blob/main/src/main/kotlin/uk/gov/justice/digital/hmpps/gradle/configmanagers/AppInsightsConfigManager.kt#L10
