@@ -19,6 +19,8 @@ generic-service:
 
   allowlist:
     saadian-test: 18.130.78.73/32
+    gmp-test: 18.132.155.211/32
+    col-test: 13.135.233.156/32
 
 generic-prometheus-alerts:
   businessHoursOnly: true
