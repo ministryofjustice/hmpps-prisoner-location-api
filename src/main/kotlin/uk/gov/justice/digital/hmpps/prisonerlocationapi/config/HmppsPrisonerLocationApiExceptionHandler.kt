@@ -22,7 +22,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
+        userMessage = "Validation failure.",
       ),
     ).also { log.info("Validation exception: {}", e.message) }
 
@@ -32,7 +32,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
+        userMessage = "Validation failure.",
       ),
     ).also { log.info("Validation exception: {}", e.message) }
 
@@ -62,7 +62,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = NOT_FOUND,
-        userMessage = "Not found: ${e.message}",
+        userMessage = "Not found.",
       ),
     ).also { log.info("Not found: {}", e.message) }
 
