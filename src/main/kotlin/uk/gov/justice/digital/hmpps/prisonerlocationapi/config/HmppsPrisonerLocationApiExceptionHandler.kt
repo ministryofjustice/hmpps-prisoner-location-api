@@ -22,8 +22,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
+        userMessage = "Validation failure.",
       ),
     ).also { log.info("Validation exception: {}", e.message) }
 
@@ -33,8 +32,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
+        userMessage = "Validation failure.",
       ),
     ).also { log.info("Validation exception: {}", e.message) }
 
@@ -44,8 +42,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = HttpStatus.FORBIDDEN,
-        userMessage = "Forbidden ${e.message}",
-        developerMessage = e.message,
+        userMessage = "Forbidden.",
       ),
     ).also { log.debug("Forbidden (403) returned with message {}", e.message) }
 
@@ -55,8 +52,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = NOT_FOUND,
-        userMessage = "Not found: ${e.message}",
-        developerMessage = e.message,
+        userMessage = "Not found.",
       ),
     ).also { log.info("Not found: {}", e.message) }
 
@@ -66,8 +62,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = NOT_FOUND,
-        userMessage = "Not found: ${e.message}",
-        developerMessage = e.message,
+        userMessage = "Not found.",
       ),
     ).also { log.info("Not found: {}", e.message) }
 
@@ -77,8 +72,7 @@ class HmppsPrisonerLocationApiExceptionHandler {
     .body(
       ErrorResponse(
         status = INTERNAL_SERVER_ERROR,
-        userMessage = "Unexpected error: ${e.message}",
-        developerMessage = e.message,
+        userMessage = "Unexpected error.",
       ),
     ).also { log.error("Unexpected exception", e) }
 
