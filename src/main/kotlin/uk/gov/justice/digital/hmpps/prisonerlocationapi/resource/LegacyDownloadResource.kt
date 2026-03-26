@@ -52,5 +52,5 @@ class LegacyDownloadResource(private val downloadService: DownloadService) {
       ),
     ],
   )
-  suspend fun downloadFile(@PathVariable filename: String): ByteArray = downloadService.download(filename) ?: throw ExtractFileNotFound()
+  suspend fun legacyDownloadFile(@PathVariable filename: String): ByteArray = downloadService.download(filename) ?: throw ExtractFileNotFound()
 }
