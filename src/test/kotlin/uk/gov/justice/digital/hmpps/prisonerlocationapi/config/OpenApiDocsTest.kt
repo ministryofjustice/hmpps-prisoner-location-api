@@ -143,4 +143,16 @@ class OpenApiDocsTest : IntegrationTestBase() {
         assertThat(it).containsExactly("status")
       }
   }
+
+  @Test
+  fun `the swagger json don't contain any duplicate methods`() {
+    webTestClient.get()
+      .uri("/v3/api-docs")
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody().jsonPath("*..operationId").value<List<String>> { list ->
+        assertThat(list).filteredOn { it.contains("_") }.isEmpty()
+      }
+  }
 }
