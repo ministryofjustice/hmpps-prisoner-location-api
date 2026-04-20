@@ -75,7 +75,9 @@ class OpenApiDocsTest : IntegrationTestBase() {
       .jsonPath("$.components.schemas.Download.properties.lastModified.example").isEqualTo("2021-07-05T10:35:17")
       .jsonPath("$.components.schemas.Download.properties.lastModified.description")
       .isEqualTo("Date time the file was last modified")
-      .jsonPath("$.components.schemas.Download.properties.lastModified.type").isEqualTo("string")
+      .jsonPath("$.components.schemas.Download.properties.lastModified.type").value<List<String>> {
+        assertThat(it).containsExactlyInAnyOrder("string", "null")
+      }
       .jsonPath("$.components.schemas.Download.properties.lastModified.format").isEqualTo("date-time")
   }
 
