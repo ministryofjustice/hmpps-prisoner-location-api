@@ -28,10 +28,7 @@ dependencies {
   // Should match the version used in App Insights pulled in by the plugin - https://github.com/ministryofjustice/hmpps-gradle-spring-boot/blob/main/src/main/kotlin/uk/gov/justice/digital/hmpps/gradle/configmanagers/AppInsightsConfigManager.kt#L10
   implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.60.1")
 
-  implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.2")
-  constraints {
-    implementation("org.webjars:swagger-ui:5.32.2")
-  }
+  implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.3")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.1.0")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
