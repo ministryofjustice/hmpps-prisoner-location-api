@@ -10,6 +10,11 @@ generic-service:
     API_BASE_URL_HMPPS_AUTH: https://sign-in-preprod.hmpps.service.justice.gov.uk/auth
     AMENDMENT_ENABLED: "true"
 
+  allowlist:
+    groups:
+      - internal
+      - delius-preprod
+
 generic-prometheus-alerts:
   businessHoursOnly: true
   alertSeverity: syscon-nonprod
