@@ -13,6 +13,10 @@ configurations {
 // okhttp only used by the AWS SDK kotlin library so okay to pin
 ext["okhttp.version"] = "5.1.0"
 
+dependencyCheck {
+  suppressionFiles.add("azure-dependency-check-suppress.xml")
+}
+
 dependencies {
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.2.0")
   implementation("org.springframework.boot:spring-boot-starter-webclient")
