@@ -24,6 +24,18 @@ class HmppsAuthMockServer : WireMockServer(8090) {
     )
   }
 
+  fun stubInvalidClient(status: Int, responseBody: String) {
+    stubFor(
+      post(urlPathEqualTo("/auth/oauth/token"))
+        .willReturn(
+          aResponse()
+            .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
+            .withBody(responseBody)
+            .withStatus(status),
+        ),
+    )
+  }
+
   fun stubGrantToken(jwt: String, status: Int = 200) {
     stubFor(
       post(urlPathEqualTo("/auth/oauth/token"))

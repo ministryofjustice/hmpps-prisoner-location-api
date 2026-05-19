@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.security.authentication.AuthenticationServiceException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
@@ -14,6 +15,8 @@ import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentia
 import org.springframework.security.oauth2.client.endpoint.WebClientReactiveClientCredentialsTokenResponseClient
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.core.AuthorizationGrantType
+import org.springframework.security.oauth2.core.OAuth2AuthorizationException
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
@@ -63,13 +66,20 @@ class AuthReactiveAuthenticationManager(hmppsAuthWebClient: WebClient, private v
       .clientId(authentication.name)
       .clientSecret(authentication.credentials.toString())
       .build().let { OAuth2ClientCredentialsGrantRequest(it) }
-
     // to get the client roles we have to parse the access token response and grab the authorities from them
-    return client.getTokenResponse(request).flatMap {
-      jwtDecoder.decode(it.accessToken.tokenValue)
-    }.flatMap {
-      AuthAwareReactiveTokenConverter().convert(it)
-    }
+    return client.getTokenResponse(request)
+      .onErrorMap(OAuth2AuthorizationException::class.java) { ex ->
+        val errorCode = ex.error.errorCode
+        when (errorCode) {
+          OAuth2ErrorCodes.INVALID_CLIENT -> BadCredentialsException("Unauthorised - $errorCode", ex)
+          else -> AuthenticationServiceException("Unable to authenticate - $errorCode", ex)
+        }
+      }
+      .flatMap {
+        jwtDecoder.decode(it.accessToken.tokenValue)
+      }.flatMap {
+        AuthAwareReactiveTokenConverter().convert(it)
+      }
   }
 
   private companion object {
