@@ -23,7 +23,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.security:spring-security-access")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.3.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.0")
 
   implementation("aws.sdk.kotlin:s3:1.6.93")
 
@@ -50,9 +50,6 @@ dependencies {
 
 kotlin {
   jvmToolchain(25)
-  compilerOptions {
-    freeCompilerArgs.addAll("-Xannotation-default-target=param-property")
-  }
 }
 
 tasks {
