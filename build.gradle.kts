@@ -26,7 +26,7 @@ dependencies {
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   // Should match the version used in App Insights pulled in by the plugin - https://github.com/ministryofjustice/hmpps-gradle-spring-boot/blob/main/src/main/kotlin/uk/gov/justice/digital/hmpps/gradle/configmanagers/AppInsightsConfigManager.kt#L10
-  implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.65.0")
+  implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.62.0")
 
   implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.3")
 
