@@ -36,39 +36,81 @@ class DownloadService(
     prefix = "${LocalDate.now().format(BASIC_ISO_DATE)}.zip"
   }.contents?.firstOrNull()?.run { Download(key, size, lastModified?.toJvmInstant()) }
 
-  suspend fun download(filename: String): ByteArray? = try {
-    auditService.publishEvent(what = "API_DOWNLOAD", subjectId = filename, who = authenticationHolder.getPrincipal())
+  suspend fun download(filename: String): ByteArray? {
+    publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
 
-    s3Client.getObject(
-      GetObjectRequest {
-        bucket = s3Properties.bucketName
-        key = filename
-      },
-    ) { it.body?.toByteArray() }
-  } catch (e: NoSuchKey) {
-    null
+    return try {
+      s3Client.getObject(
+        GetObjectRequest {
+          bucket = s3Properties.bucketName
+          key = filename
+        },
+      ) { it.body?.toByteArray() }.also {
+        publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
+      }
+    } catch (e: NoSuchKey) {
+      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename)
+      null
+    }
   }
 
   suspend fun upload(filename: String?, contents: ByteArray) {
     if (filename == null) throw UploadValidationFailure()
-    if (!filename.matches("[0-9]{8}\\.zip".toRegex())) throw UploadValidationFailure()
 
-    auditService.publishEvent(what = "API_UPLOAD", subjectId = filename, who = authenticationHolder.getPrincipal())
-    s3Client.putObject {
-      bucket = s3Properties.bucketName
-      key = filename
-      body = ByteStream.fromBytes(contents)
+    publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
+
+    try {
+      if (!filename.matches("[0-9]{8}\\.zip".toRegex())) throw UploadValidationFailure()
+
+      s3Client.putObject {
+        bucket = s3Properties.bucketName
+        key = filename
+        body = ByteStream.fromBytes(contents)
+      }
+
+      publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
+    } catch (e: UploadValidationFailure) {
+      publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE, filename)
+      throw e
     }
   }
 
   suspend fun delete(filename: String) {
-    auditService.publishEvent(what = "API_DELETE", subjectId = filename, who = authenticationHolder.getPrincipal())
+    publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
 
-    s3Client.deleteObject {
-      bucket = s3Properties.bucketName
-      key = filename
+    try {
+      s3Client.deleteObject {
+        bucket = s3Properties.bucketName
+        key = filename
+      }
+
+      publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
+    } catch (e: Exception) {
+      publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_FAILURE, filename)
+      throw e
     }
+  }
+
+  private suspend fun publishAuditEvent(eventType: AuditEventType, filename: String) {
+    auditService.publishEvent(
+      what = eventType.name,
+      subjectId = filename,
+      subjectType = "REPORT_ID",
+      who = authenticationHolder.getPrincipal(),
+    )
   }
 }
 
 class UploadValidationFailure : RuntimeException("Upload filename must be of format yyyyMMdd.zip e.g. 20240110.zip")
+
+enum class AuditEventType(val description: String) {
+  DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT("An attempt has been made to download an offender location extract file"),
+  DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS("An offender location extract file has been successfully downloaded"),
+  DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE("An attempt to download an offender location extract file has failed"),
+  CREATE_OFFLOC_EXTRACT_FILE_ATTEMPT("An attempt has been made to upload an offender location extract file"),
+  CREATE_OFFLOC_EXTRACT_FILE_SUCCESS("An offender location extract file has been successfully uploaded"),
+  CREATE_OFFLOC_EXTRACT_FILE_FAILURE("An attempt to upload an offender location extract file has failed"),
+  DELETE_OFFLOC_EXTRACT_FILE_ATTEMPT("An attempt has been made to delete an offender location extract file"),
+  DELETE_OFFLOC_EXTRACT_FILE_SUCCESS("An offender location extract file has been successfully deleted"),
+  DELETE_OFFLOC_EXTRACT_FILE_FAILURE("An attempt to delete an offender location extract file has failed"),
+}
