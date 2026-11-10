@@ -9,6 +9,7 @@ import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.toByteArray
 import aws.smithy.kotlin.runtime.time.toJvmInstant
+import kotlinx.coroutines.CancellationException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.config.S3Properties
@@ -103,6 +104,10 @@ class DownloadService(
         subjectType = "REPORT_ID",
         who = authenticationHolder.getPrincipal(),
       )
+    } catch (e: CancellationException) {
+      // Auditing is best-effort, but cancellation (e.g. client disconnect) must propagate rather than be swallowed.
+      // Cancellation of the coroutine does not represent a failure to audit the action. The action is canceled.
+      throw e
     } catch (e: Exception) {
       log.warn("Failed to publish audit event {} for {}", eventType.name, filename, e)
     }
