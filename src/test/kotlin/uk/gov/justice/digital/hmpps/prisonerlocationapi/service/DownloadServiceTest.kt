@@ -3,7 +3,6 @@
 package uk.gov.justice.digital.hmpps.prisonerlocationapi.service
 
 import aws.sdk.kotlin.services.s3.S3Client
-import aws.sdk.kotlin.services.s3.listObjectsV2
 import aws.sdk.kotlin.services.s3.model.DeleteObjectResponse
 import aws.sdk.kotlin.services.s3.model.ListObjectsV2Response
 import aws.sdk.kotlin.services.s3.model.NoSuchKey
