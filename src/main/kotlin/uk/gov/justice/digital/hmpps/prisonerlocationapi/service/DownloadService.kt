@@ -52,6 +52,9 @@ class DownloadService(
     } catch (e: NoSuchKey) {
       publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename)
       null
+    } catch (e: Exception) {
+      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename)
+      throw e
     }
   }
 
@@ -70,7 +73,7 @@ class DownloadService(
       }
 
       publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
-    } catch (e: UploadValidationFailure) {
+    } catch (e: Exception) {
       publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE, filename)
       throw e
     }

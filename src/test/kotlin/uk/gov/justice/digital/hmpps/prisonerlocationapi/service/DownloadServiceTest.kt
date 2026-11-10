@@ -216,6 +216,34 @@ internal class DownloadServiceTest {
     }
 
     @Test
+    internal fun `calls audit service with attempt and failure events when an unexpected error occurs`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenThrow(RuntimeException("s3 unavailable"))
+      assertThrows<RuntimeException> {
+        downloadService.download("file.zip")
+      }
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
     internal fun `does not fail the download when publishing the audit event fails`() = runTest {
       whenever(s3Client.getObject<ByteArray>(any(), any())).thenReturn(
         "hello".toByteArray(),
@@ -386,6 +414,34 @@ internal class DownloadServiceTest {
           assertThat(it.key).isEqualTo("20240123.zip")
           assertThat(it.body).isNotNull
         },
+      )
+    }
+
+    @Test
+    internal fun `calls audit service with attempt and failure events when an unexpected error occurs`() = runTest {
+      whenever(s3Client.putObject(any())).thenThrow(RuntimeException("s3 unavailable"))
+      assertThrows<RuntimeException> {
+        downloadService.upload("20240123.zip", "hello".toByteArray())
+      }
+      verify(auditService).publishEvent(
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_ATTEMPT"),
+        subjectId = eq("20240123.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+      verify(auditService).publishEvent(
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("20240123.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
       )
     }
 
