@@ -16,6 +16,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.check
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
@@ -212,6 +213,29 @@ internal class DownloadServiceTest {
         service = isNull(),
         details = isNull(),
       )
+    }
+
+    @Test
+    internal fun `does not fail the download when publishing the audit event fails`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenReturn(
+        "hello".toByteArray(),
+      )
+      whenever(
+        auditService.publishEvent(
+          what = any(),
+          subjectId = any(),
+          subjectType = any(),
+          correlationId = anyOrNull(),
+          `when` = any(),
+          who = any(),
+          service = anyOrNull(),
+          details = anyOrNull(),
+        ),
+      ).thenThrow(RuntimeException("audit queue unavailable"))
+
+      val download = downloadService.download("file.zip")
+      assertThat(download).isNotNull()
+      assertThat(String(download!!)).isEqualTo("hello")
     }
   }
 

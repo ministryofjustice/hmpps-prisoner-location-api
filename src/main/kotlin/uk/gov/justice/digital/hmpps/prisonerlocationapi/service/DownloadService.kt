@@ -9,6 +9,7 @@ import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.toByteArray
 import aws.smithy.kotlin.runtime.time.toJvmInstant
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.config.S3Properties
 import uk.gov.justice.digital.hmpps.prisonerlocationapi.resource.Download
@@ -92,12 +93,20 @@ class DownloadService(
   }
 
   private suspend fun publishAuditEvent(eventType: AuditEventType, filename: String) {
-    auditService.publishEvent(
-      what = eventType.name,
-      subjectId = filename,
-      subjectType = "REPORT_ID",
-      who = authenticationHolder.getPrincipal(),
-    )
+    try {
+      auditService.publishEvent(
+        what = eventType.name,
+        subjectId = filename,
+        subjectType = "REPORT_ID",
+        who = authenticationHolder.getPrincipal(),
+      )
+    } catch (e: Exception) {
+      log.warn("Failed to publish audit event {} for {}", eventType.name, filename, e)
+    }
+  }
+
+  private companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
 
