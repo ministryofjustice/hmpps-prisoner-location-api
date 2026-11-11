@@ -48,6 +48,8 @@ class DownloadService(
           key = filename
         },
       ) { it.body?.toByteArray() }
+    } catch (e: CancellationException) {
+      throw e
     } catch (e: NoSuchKey) {
       publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, "File not found")
       return null
@@ -78,6 +80,8 @@ class DownloadService(
         key = filename
         body = ByteStream.fromBytes(contents)
       }
+    } catch (e: CancellationException) {
+      throw e
     } catch (e: Exception) {
       publishAuditEvent(
         AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE,
@@ -98,6 +102,8 @@ class DownloadService(
         bucket = s3Properties.bucketName
         key = filename
       }
+    } catch (e: CancellationException) {
+      throw e
     } catch (e: Exception) {
       publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_FAILURE, filename)
       throw e

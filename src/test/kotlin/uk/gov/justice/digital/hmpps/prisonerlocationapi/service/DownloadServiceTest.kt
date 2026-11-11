@@ -47,6 +47,34 @@ internal class DownloadServiceTest {
     HmppsReactiveAuthenticationHolder(),
   )
 
+  private suspend fun throwCancellationOnAudit(what: String) {
+    whenever(
+      auditService.publishEvent(
+        what = eq(what),
+        subjectId = any(),
+        subjectType = any(),
+        correlationId = anyOrNull(),
+        `when` = any(),
+        who = any(),
+        service = anyOrNull(),
+        details = anyOrNull(),
+      ),
+    ).thenThrow(CancellationException("cancelled"))
+  }
+
+  private suspend fun verifyNeverAudited(what: String) {
+    verify(auditService, never()).publishEvent(
+      what = eq(what),
+      subjectId = any(),
+      subjectType = any(),
+      correlationId = anyOrNull(),
+      `when` = any(),
+      who = any(),
+      service = anyOrNull(),
+      details = anyOrNull(),
+    )
+  }
+
   @Nested
   internal inner class getList {
     @Test
@@ -323,6 +351,14 @@ internal class DownloadServiceTest {
         details = anyOrNull(),
       )
     }
+
+    @Test
+    internal fun `cancellation during storage call is not audited as a failure`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.download("file.zip") }
+      verifyNeverAudited("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE")
+    }
   }
 
   @Nested
@@ -404,6 +440,23 @@ internal class DownloadServiceTest {
         service = isNull(),
         details = isNull(),
       )
+    }
+
+    @Test
+    internal fun `cancellation during storage call is not audited as a failure`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.delete("file.zip") }
+      verifyNeverAudited("DELETE_OFFLOC_EXTRACT_FILE_FAILURE")
+    }
+
+    @Test
+    internal fun `cancellation while publishing success event is not audited as a failure`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenReturn(DeleteObjectResponse { })
+      throwCancellationOnAudit("DELETE_OFFLOC_EXTRACT_FILE_SUCCESS")
+
+      assertThrows<CancellationException> { downloadService.delete("file.zip") }
+      verifyNeverAudited("DELETE_OFFLOC_EXTRACT_FILE_FAILURE")
     }
   }
 
@@ -530,6 +583,23 @@ internal class DownloadServiceTest {
         service = isNull(),
         details = isNull(),
       )
+    }
+
+    @Test
+    internal fun `cancellation during storage call is not audited as a failure`() = runTest {
+      whenever(s3Client.putObject(any())).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.upload("20240123.zip", "hello".toByteArray()) }
+      verifyNeverAudited("CREATE_OFFLOC_EXTRACT_FILE_FAILURE")
+    }
+
+    @Test
+    internal fun `cancellation while publishing success event is not audited as a failure`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(PutObjectResponse { })
+      throwCancellationOnAudit("CREATE_OFFLOC_EXTRACT_FILE_SUCCESS")
+
+      assertThrows<CancellationException> { downloadService.upload("20240123.zip", "hello".toByteArray()) }
+      verifyNeverAudited("CREATE_OFFLOC_EXTRACT_FILE_FAILURE")
     }
   }
 }
