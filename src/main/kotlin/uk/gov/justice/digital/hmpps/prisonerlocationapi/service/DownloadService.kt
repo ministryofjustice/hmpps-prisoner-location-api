@@ -48,10 +48,15 @@ class DownloadService(
           key = filename
         },
       ) { it.body?.toByteArray() }.also {
-        publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
+        // A null body means no content was returned, so the caller gets a 404 and the download must not be audited as a success
+        publishAuditEvent(
+          if (it == null) AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE else AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS,
+          filename,
+          if (it == null) "No content returned for file" else null,
+        )
       }
     } catch (e: NoSuchKey) {
-      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename)
+      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, "File not found")
       null
     } catch (e: Exception) {
       publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename)
@@ -75,7 +80,11 @@ class DownloadService(
 
       publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
     } catch (e: Exception) {
-      publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE, filename)
+      publishAuditEvent(
+        AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE,
+        filename,
+        if (e is UploadValidationFailure) "Invalid filename format" else null,
+      )
       throw e
     }
   }
@@ -96,13 +105,14 @@ class DownloadService(
     }
   }
 
-  private suspend fun publishAuditEvent(eventType: AuditEventType, filename: String) {
+  private suspend fun publishAuditEvent(eventType: AuditEventType, filename: String, details: String? = null) {
     try {
       auditService.publishEvent(
         what = eventType.name,
         subjectId = filename,
         subjectType = "REPORT_ID",
         who = authenticationHolder.getPrincipal(),
+        details = details,
       )
     } catch (e: CancellationException) {
       // Auditing is best-effort, but cancellation (e.g. client disconnect) must propagate rather than be swallowed.

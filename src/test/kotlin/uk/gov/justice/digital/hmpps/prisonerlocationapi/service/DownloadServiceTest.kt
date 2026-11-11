@@ -20,6 +20,7 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.check
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
@@ -140,6 +141,33 @@ internal class DownloadServiceTest {
     }
 
     @Test
+    internal fun `test download null body publishes failure audit event`() = runTest {
+      whenever(s3Client.getObject<ByteArray?>(any(), any())).thenReturn(null)
+      val download = downloadService.download("file.zip")
+      assertThat(download).isNull()
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = eq("No content returned for file"),
+      )
+      verify(auditService, never()).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
     internal fun `test download no file found`() = runTest {
       whenever(s3Client.getObject<ByteArray>(any(), any())).thenThrow(NoSuchKey {})
       val download = downloadService.download("file.zip")
@@ -211,7 +239,7 @@ internal class DownloadServiceTest {
         `when` = any(),
         who = eq("my-user"),
         service = isNull(),
-        details = isNull(),
+        details = eq("File not found"),
       )
     }
 
@@ -397,7 +425,7 @@ internal class DownloadServiceTest {
         `when` = any(),
         who = eq("my-user"),
         service = isNull(),
-        details = isNull(),
+        details = eq("Invalid filename format"),
       )
     }
 
