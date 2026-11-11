@@ -41,26 +41,23 @@ class DownloadService(
   suspend fun download(filename: String): ByteArray? {
     publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
 
-    val body = try {
-      s3Client.getObject(
-        GetObjectRequest {
-          bucket = s3Properties.bucketName
-          key = filename
-        },
-      ) { it.body?.toByteArray() }
-    } catch (e: CancellationException) {
-      throw e
-    } catch (e: NoSuchKey) {
-      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, "File not found")
-      return null
-    } catch (e: Exception) {
-      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename)
-      throw e
+    val body = auditingFailures(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename) {
+      try {
+        s3Client.getObject(
+          GetObjectRequest {
+            bucket = s3Properties.bucketName
+            key = filename
+          },
+        ) { it.body?.toByteArray() }
+      } catch (e: NoSuchKey) {
+        publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, FILE_NOT_FOUND)
+        return null
+      }
     }
 
     // A null body means no content was returned, so the caller gets a 404 and the download must not be audited as a success
     if (body == null) {
-      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, "No content returned for file")
+      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, NO_CONTENT)
     } else {
       publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
     }
@@ -72,7 +69,11 @@ class DownloadService(
 
     publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
 
-    try {
+    auditingFailures(
+      AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE,
+      filename,
+      reason = { if (it is UploadValidationFailure) INVALID_FILENAME else null },
+    ) {
       if (!filename.matches("[0-9]{8}\\.zip".toRegex())) throw UploadValidationFailure()
 
       s3Client.putObject {
@@ -80,15 +81,6 @@ class DownloadService(
         key = filename
         body = ByteStream.fromBytes(contents)
       }
-    } catch (e: CancellationException) {
-      throw e
-    } catch (e: Exception) {
-      publishAuditEvent(
-        AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE,
-        filename,
-        if (e is UploadValidationFailure) "Invalid filename format" else null,
-      )
-      throw e
     }
 
     publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
@@ -97,19 +89,30 @@ class DownloadService(
   suspend fun delete(filename: String) {
     publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
 
-    try {
+    auditingFailures(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_FAILURE, filename) {
       s3Client.deleteObject {
         bucket = s3Properties.bucketName
         key = filename
       }
-    } catch (e: CancellationException) {
-      throw e
-    } catch (e: Exception) {
-      publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_FAILURE, filename)
-      throw e
     }
 
     publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
+  }
+
+  // Publishes a failure event for errors from the action only. The success event must be published outside this block
+  // so that cancellation while auditing success is not misreported as a failure of an action that already succeeded.
+  private suspend inline fun <T> auditingFailures(
+    failureEvent: AuditEventType,
+    filename: String,
+    reason: (Exception) -> String? = { null },
+    action: () -> T,
+  ): T = try {
+    action()
+  } catch (e: CancellationException) {
+    throw e
+  } catch (e: Exception) {
+    publishAuditEvent(failureEvent, filename, reason(e))
+    throw e
   }
 
   private suspend fun publishAuditEvent(eventType: AuditEventType, filename: String, details: String? = null) {
@@ -132,6 +135,10 @@ class DownloadService(
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
+
+    private const val FILE_NOT_FOUND = "File not found"
+    private const val NO_CONTENT = "No content returned for file"
+    private const val INVALID_FILENAME = "Invalid filename format"
   }
 }
 
