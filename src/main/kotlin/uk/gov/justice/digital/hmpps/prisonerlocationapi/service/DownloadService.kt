@@ -41,18 +41,21 @@ class DownloadService(
   suspend fun download(filename: String): ByteArray? {
     publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
 
-    val body = auditingFailures(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename) {
-      try {
+    val body = try {
+      auditingFailures(
+        AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE,
+        filename,
+        reason = { if (it is NoSuchKey) FILE_NOT_FOUND else null },
+      ) {
         s3Client.getObject(
           GetObjectRequest {
             bucket = s3Properties.bucketName
             key = filename
           },
         ) { it.body?.toByteArray() }
-      } catch (e: NoSuchKey) {
-        publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, FILE_NOT_FOUND)
-        return null
       }
+    } catch (e: NoSuchKey) {
+      return null
     }
 
     // A null body means no content was returned, so the caller gets a 404 and the download must not be audited as a success
