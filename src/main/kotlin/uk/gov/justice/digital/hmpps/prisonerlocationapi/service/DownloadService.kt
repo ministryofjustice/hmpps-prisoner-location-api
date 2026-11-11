@@ -41,27 +41,28 @@ class DownloadService(
   suspend fun download(filename: String): ByteArray? {
     publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT, filename)
 
-    return try {
+    val body = try {
       s3Client.getObject(
         GetObjectRequest {
           bucket = s3Properties.bucketName
           key = filename
         },
-      ) { it.body?.toByteArray() }.also {
-        // A null body means no content was returned, so the caller gets a 404 and the download must not be audited as a success
-        publishAuditEvent(
-          if (it == null) AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE else AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS,
-          filename,
-          if (it == null) "No content returned for file" else null,
-        )
-      }
+      ) { it.body?.toByteArray() }
     } catch (e: NoSuchKey) {
       publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, "File not found")
-      null
+      return null
     } catch (e: Exception) {
       publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename)
       throw e
     }
+
+    // A null body means no content was returned, so the caller gets a 404 and the download must not be audited as a success
+    if (body == null) {
+      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE, filename, "No content returned for file")
+    } else {
+      publishAuditEvent(AuditEventType.DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
+    }
+    return body
   }
 
   suspend fun upload(filename: String?, contents: ByteArray) {
@@ -77,8 +78,6 @@ class DownloadService(
         key = filename
         body = ByteStream.fromBytes(contents)
       }
-
-      publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
     } catch (e: Exception) {
       publishAuditEvent(
         AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_FAILURE,
@@ -87,6 +86,8 @@ class DownloadService(
       )
       throw e
     }
+
+    publishAuditEvent(AuditEventType.CREATE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
   }
 
   suspend fun delete(filename: String) {
@@ -97,12 +98,12 @@ class DownloadService(
         bucket = s3Properties.bucketName
         key = filename
       }
-
-      publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
     } catch (e: Exception) {
       publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_FAILURE, filename)
       throw e
     }
+
+    publishAuditEvent(AuditEventType.DELETE_OFFLOC_EXTRACT_FILE_SUCCESS, filename)
   }
 
   private suspend fun publishAuditEvent(eventType: AuditEventType, filename: String, details: String? = null) {

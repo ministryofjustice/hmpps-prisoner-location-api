@@ -8,6 +8,7 @@ import aws.sdk.kotlin.services.s3.model.ListObjectsV2Response
 import aws.sdk.kotlin.services.s3.model.NoSuchKey
 import aws.sdk.kotlin.services.s3.model.Object
 import aws.sdk.kotlin.services.s3.model.PutObjectResponse
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
@@ -292,6 +293,35 @@ internal class DownloadServiceTest {
       val download = downloadService.download("file.zip")
       assertThat(download).isNotNull()
       assertThat(String(download!!)).isEqualTo("hello")
+    }
+
+    @Test
+    internal fun `cancellation while publishing success event is not audited as a failure`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenReturn("hello".toByteArray())
+      whenever(
+        auditService.publishEvent(
+          what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS"),
+          subjectId = any(),
+          subjectType = any(),
+          correlationId = anyOrNull(),
+          `when` = any(),
+          who = any(),
+          service = anyOrNull(),
+          details = anyOrNull(),
+        ),
+      ).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.download("file.zip") }
+      verify(auditService, never()).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = any(),
+        subjectType = any(),
+        correlationId = anyOrNull(),
+        `when` = any(),
+        who = any(),
+        service = anyOrNull(),
+        details = anyOrNull(),
+      )
     }
   }
 
