@@ -3,12 +3,12 @@
 package uk.gov.justice.digital.hmpps.prisonerlocationapi.service
 
 import aws.sdk.kotlin.services.s3.S3Client
-import aws.sdk.kotlin.services.s3.listObjectsV2
 import aws.sdk.kotlin.services.s3.model.DeleteObjectResponse
 import aws.sdk.kotlin.services.s3.model.ListObjectsV2Response
 import aws.sdk.kotlin.services.s3.model.NoSuchKey
 import aws.sdk.kotlin.services.s3.model.Object
 import aws.sdk.kotlin.services.s3.model.PutObjectResponse
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
@@ -17,9 +17,11 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.check
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
@@ -44,6 +46,34 @@ internal class DownloadServiceTest {
     auditService,
     HmppsReactiveAuthenticationHolder(),
   )
+
+  private suspend fun throwCancellationOnAudit(what: String) {
+    whenever(
+      auditService.publishEvent(
+        what = eq(what),
+        subjectId = any(),
+        subjectType = any(),
+        correlationId = anyOrNull(),
+        `when` = any(),
+        who = any(),
+        service = anyOrNull(),
+        details = anyOrNull(),
+      ),
+    ).thenThrow(CancellationException("cancelled"))
+  }
+
+  private suspend fun verifyNeverAudited(what: String) {
+    verify(auditService, never()).publishEvent(
+      what = eq(what),
+      subjectId = any(),
+      subjectType = any(),
+      correlationId = anyOrNull(),
+      `when` = any(),
+      who = any(),
+      service = anyOrNull(),
+      details = anyOrNull(),
+    )
+  }
 
   @Nested
   internal inner class getList {
@@ -140,6 +170,33 @@ internal class DownloadServiceTest {
     }
 
     @Test
+    internal fun `test download null body publishes failure audit event`() = runTest {
+      whenever(s3Client.getObject<ByteArray?>(any(), any())).thenReturn(null)
+      val download = downloadService.download("file.zip")
+      assertThat(download).isNull()
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = eq("No content returned for file"),
+      )
+      verify(auditService, never()).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
     internal fun `test download no file found`() = runTest {
       whenever(s3Client.getObject<ByteArray>(any(), any())).thenThrow(NoSuchKey {})
       val download = downloadService.download("file.zip")
@@ -162,21 +219,145 @@ internal class DownloadServiceTest {
     }
 
     @Test
-    internal fun `calls audit service`() = runTest {
+    internal fun `calls audit service with attempt and success events`() = runTest {
       whenever(s3Client.getObject<ByteArray>(any(), any())).thenReturn(
         "hello".toByteArray(),
       )
       downloadService.download("file.zip")
       verify(auditService).publishEvent(
-        what = eq("API_DOWNLOAD"),
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT"),
         subjectId = eq("file.zip"),
-        subjectType = isNull(),
+        subjectType = eq("REPORT_ID"),
         correlationId = isNull(),
         `when` = any(),
         who = eq("my-user"),
         service = isNull(),
         details = isNull(),
       )
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
+    internal fun `calls audit service with attempt and failure events when file not found`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenThrow(NoSuchKey {})
+      downloadService.download("file.zip")
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = eq("File not found"),
+      )
+    }
+
+    @Test
+    internal fun `calls audit service with attempt and failure events when an unexpected error occurs`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenThrow(RuntimeException("s3 unavailable"))
+      assertThrows<RuntimeException> {
+        downloadService.download("file.zip")
+      }
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_ATTEMPT"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+      verify(auditService).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
+    internal fun `does not fail the download when publishing the audit event fails`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenReturn(
+        "hello".toByteArray(),
+      )
+      whenever(
+        auditService.publishEvent(
+          what = any(),
+          subjectId = any(),
+          subjectType = any(),
+          correlationId = anyOrNull(),
+          `when` = any(),
+          who = any(),
+          service = anyOrNull(),
+          details = anyOrNull(),
+        ),
+      ).thenThrow(RuntimeException("audit queue unavailable"))
+
+      val download = downloadService.download("file.zip")
+      assertThat(download).isNotNull()
+      assertThat(String(download!!)).isEqualTo("hello")
+    }
+
+    @Test
+    internal fun `cancellation while publishing success event is not audited as a failure`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenReturn("hello".toByteArray())
+      whenever(
+        auditService.publishEvent(
+          what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_SUCCESS"),
+          subjectId = any(),
+          subjectType = any(),
+          correlationId = anyOrNull(),
+          `when` = any(),
+          who = any(),
+          service = anyOrNull(),
+          details = anyOrNull(),
+        ),
+      ).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.download("file.zip") }
+      verify(auditService, never()).publishEvent(
+        what = eq("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = any(),
+        subjectType = any(),
+        correlationId = anyOrNull(),
+        `when` = any(),
+        who = any(),
+        service = anyOrNull(),
+        details = anyOrNull(),
+      )
+    }
+
+    @Test
+    internal fun `cancellation during storage call is not audited as a failure`() = runTest {
+      whenever(s3Client.getObject<ByteArray>(any(), any())).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.download("file.zip") }
+      verifyNeverAudited("DOWNLOAD_OFFLOC_EXTRACT_FILE_FAILURE")
     }
   }
 
@@ -206,18 +387,76 @@ internal class DownloadServiceTest {
     }
 
     @Test
-    internal fun `calls audit service`() = runTest {
+    internal fun `calls audit service with attempt and success events`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenReturn(
+        DeleteObjectResponse { },
+      )
       downloadService.delete("file.zip")
       verify(auditService).publishEvent(
-        what = eq("API_DELETE"),
+        what = eq("DELETE_OFFLOC_EXTRACT_FILE_ATTEMPT"),
         subjectId = eq("file.zip"),
-        subjectType = isNull(),
+        subjectType = eq("REPORT_ID"),
         correlationId = isNull(),
         `when` = any(),
         who = eq("my-user"),
         service = isNull(),
         details = isNull(),
       )
+      verify(auditService).publishEvent(
+        what = eq("DELETE_OFFLOC_EXTRACT_FILE_SUCCESS"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
+    internal fun `calls audit service with attempt and failure events when delete fails`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenThrow(RuntimeException("boom"))
+      assertThrows<RuntimeException> {
+        downloadService.delete("file.zip")
+      }
+      verify(auditService).publishEvent(
+        what = eq("DELETE_OFFLOC_EXTRACT_FILE_ATTEMPT"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+      verify(auditService).publishEvent(
+        what = eq("DELETE_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
+    internal fun `cancellation during storage call is not audited as a failure`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.delete("file.zip") }
+      verifyNeverAudited("DELETE_OFFLOC_EXTRACT_FILE_FAILURE")
+    }
+
+    @Test
+    internal fun `cancellation while publishing success event is not audited as a failure`() = runTest {
+      whenever(s3Client.deleteObject(any())).thenReturn(DeleteObjectResponse { })
+      throwCancellationOnAudit("DELETE_OFFLOC_EXTRACT_FILE_SUCCESS")
+
+      assertThrows<CancellationException> { downloadService.delete("file.zip") }
+      verifyNeverAudited("DELETE_OFFLOC_EXTRACT_FILE_FAILURE")
     }
   }
 
@@ -244,6 +483,36 @@ internal class DownloadServiceTest {
     }
 
     @Test
+    internal fun `calls audit service with attempt and failure events when filename invalid`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(
+        PutObjectResponse { },
+      )
+      assertThrows<UploadValidationFailure> {
+        downloadService.upload("file.zip", "hello".toByteArray())
+      }
+      verify(auditService).publishEvent(
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_ATTEMPT"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+      verify(auditService).publishEvent(
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("file.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = eq("Invalid filename format"),
+      )
+    }
+
+    @Test
     internal fun `test upload success`() = runTest {
       whenever(s3Client.putObject(any())).thenReturn(
         PutObjectResponse { },
@@ -260,22 +529,77 @@ internal class DownloadServiceTest {
     }
 
     @Test
-    internal fun `calls audit service`() = runTest {
-      whenever(s3Client.putObject(any())).thenReturn(
-        PutObjectResponse { },
-      )
-      downloadService.upload("20240123.zip", "hello".toByteArray())
-
+    internal fun `calls audit service with attempt and failure events when an unexpected error occurs`() = runTest {
+      whenever(s3Client.putObject(any())).thenThrow(RuntimeException("s3 unavailable"))
+      assertThrows<RuntimeException> {
+        downloadService.upload("20240123.zip", "hello".toByteArray())
+      }
       verify(auditService).publishEvent(
-        what = eq("API_UPLOAD"),
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_ATTEMPT"),
         subjectId = eq("20240123.zip"),
-        subjectType = isNull(),
+        subjectType = eq("REPORT_ID"),
         correlationId = isNull(),
         `when` = any(),
         who = eq("my-user"),
         service = isNull(),
         details = isNull(),
       )
+      verify(auditService).publishEvent(
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_FAILURE"),
+        subjectId = eq("20240123.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
+    internal fun `calls audit service with attempt and success events`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(
+        PutObjectResponse { },
+      )
+      downloadService.upload("20240123.zip", "hello".toByteArray())
+
+      verify(auditService).publishEvent(
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_ATTEMPT"),
+        subjectId = eq("20240123.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+      verify(auditService).publishEvent(
+        what = eq("CREATE_OFFLOC_EXTRACT_FILE_SUCCESS"),
+        subjectId = eq("20240123.zip"),
+        subjectType = eq("REPORT_ID"),
+        correlationId = isNull(),
+        `when` = any(),
+        who = eq("my-user"),
+        service = isNull(),
+        details = isNull(),
+      )
+    }
+
+    @Test
+    internal fun `cancellation during storage call is not audited as a failure`() = runTest {
+      whenever(s3Client.putObject(any())).thenThrow(CancellationException("cancelled"))
+
+      assertThrows<CancellationException> { downloadService.upload("20240123.zip", "hello".toByteArray()) }
+      verifyNeverAudited("CREATE_OFFLOC_EXTRACT_FILE_FAILURE")
+    }
+
+    @Test
+    internal fun `cancellation while publishing success event is not audited as a failure`() = runTest {
+      whenever(s3Client.putObject(any())).thenReturn(PutObjectResponse { })
+      throwCancellationOnAudit("CREATE_OFFLOC_EXTRACT_FILE_SUCCESS")
+
+      assertThrows<CancellationException> { downloadService.upload("20240123.zip", "hello".toByteArray()) }
+      verifyNeverAudited("CREATE_OFFLOC_EXTRACT_FILE_FAILURE")
     }
   }
 }
